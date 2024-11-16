@@ -1,12 +1,13 @@
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { LogOut, Database, UserCircle } from 'lucide-react';
+import { LogOut, Database, UserCircle, Package } from 'lucide-react';
 import { LoadsListPage } from './LoadsList';
 import { Button } from '../components/ui/Button';
 import { AdminPanel } from './AdminPanel';
 import { CprCalculatorPage } from './CprCalculator';
 import { ProfilePage } from './Profile';
+import { InventoryPage } from './Inventory';
 import { useAuthStore } from '../store/auth';
 import { DonateButton } from '../components/ui/DonateButton';
 
@@ -52,6 +53,15 @@ export default function Dashboard() {
                 >
                   CPR Calculator
                 </NavLink>
+                <NavLink
+                  to="/inventory"
+                  className={({ isActive }) =>
+                    `${isActive ? 'border-primary-500' : 'border-transparent'} text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`
+                  }
+                >
+                  <Package className="w-4 h-4 mr-1" />
+                  Inventory
+                </NavLink>
                 {user?.role === 'admin' && (
                   <NavLink
                     to="/admin"
@@ -76,7 +86,7 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <DonateButton />
               <Button
-                variant="primary"
+                variant=" primary"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -91,6 +101,7 @@ export default function Dashboard() {
         <Routes>
           <Route path="/" element={<LoadsListPage />} />
           <Route path="/calculator" element={<CprCalculatorPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
           {user?.role === 'admin' && (
             <Route path="/admin" element={<AdminPanel />} />
           )}

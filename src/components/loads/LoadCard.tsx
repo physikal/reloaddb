@@ -1,7 +1,8 @@
 import React from 'react';
-import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign } from 'lucide-react';
+import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { Load } from '../../types';
 import { Button } from '../ui/Button';
+import { useState } from 'react';
 
 interface LoadCardProps {
   load: Load;
@@ -12,6 +13,8 @@ interface LoadCardProps {
 }
 
 export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite }: LoadCardProps) {
+  const [showCostBreakdown, setShowCostBreakdown] = useState(false);
+
   return (
     <div className="bg-white rounded-lg shadow p-6 space-y-4">
       <div className="flex justify-between items-start">
@@ -61,18 +64,43 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
       </div>
 
       {load.costPerRound !== undefined && (
-        <div className="mt-2 flex items-center space-x-2 text-sm">
-          <DollarSign className="w-4 h-4 text-primary-600" />
-          <span className="font-medium text-primary-700">
-            CPR: ${load.costPerRound.toFixed(4)}
-          </span>
-          {load.costBreakdown && (
-            <span className="text-gray-500">
-              (B: ${load.costBreakdown.bulletCost.toFixed(3)} | 
-               P: ${load.costBreakdown.powderCost.toFixed(3)} | 
-               Pr: ${load.costBreakdown.primerCost.toFixed(3)} | 
-               Br: ${load.costBreakdown.brassCost.toFixed(3)})
-            </span>
+        <div className="mt-2 space-y-2">
+          <button
+            onClick={() => setShowCostBreakdown(!showCostBreakdown)}
+            className="w-full flex items-center justify-between bg-primary-50 rounded-md px-3 py-2 hover:bg-primary-100 transition-colors"
+          >
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 text-primary-600 mr-2" />
+              <span className="font-medium text-primary-900">
+                {load.costPerRound.toFixed(4)} per round
+              </span>
+            </div>
+            {showCostBreakdown ? (
+              <ChevronUp className="w-4 h-4 text-primary-600" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-primary-600" />
+            )}
+          </button>
+          
+          {showCostBreakdown && load.costBreakdown && (
+            <div className="bg-gray-50 rounded-md p-3 text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Bullet:</span>
+                <span className="font-medium">{load.costBreakdown.bulletCost.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Powder:</span>
+                <span className="font-medium">{load.costBreakdown.powderCost.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Primer:</span>
+                <span className="font-medium">{load.costBreakdown.primerCost.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Brass:</span>
+                <span className="font-medium">{load.costBreakdown.brassCost.toFixed(4)}</span>
+              </div>
+            </div>
           )}
         </div>
       )}

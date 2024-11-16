@@ -7,8 +7,13 @@
   input[type="text"],
   input[type="email"],
   input[type="password"],
+  select,
+  textarea {
+    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-2;
+  }
+
   select {
-    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500;
+    @apply pr-8;
   }
 
   label {

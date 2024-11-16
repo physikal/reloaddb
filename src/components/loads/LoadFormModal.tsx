@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
-import { Load } from '../../types';
 import { Button } from '../ui/Button';
+import { useLoadsStore } from '../../store/loads';
 import { useCartridgesStore } from '../../store/cartridges';
 import { useAuthStore } from '../../store/auth';
 import { CartridgeManager } from './CartridgeManager';
+import { Load } from '../../types';
 
 interface LoadFormModalProps {
   isOpen: boolean;
@@ -19,24 +20,75 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
   const [showCartridgeManager, setShowCartridgeManager] = useState(false);
   const userCartridges = cartridges.filter(c => c.userId === user?.id);
   const [formData, setFormData] = useState({
-    cartridge: initialData?.cartridge || '',
+    cartridge: '',
     bullet: {
-      brand: initialData?.bullet.brand || '',
-      weight: initialData?.bullet.weight ?? '',
+      brand: '',
+      weight: '',
     },
     powder: {
-      brand: initialData?.powder.brand || '',
-      weight: initialData?.powder.weight ?? '',
+      brand: '',
+      weight: '',
     },
-    primer: initialData?.primer || '',
+    primer: '',
     brass: {
-      brand: initialData?.brass.brand || '',
-      length: initialData?.brass.length ?? '',
+      brand: '',
+      length: '',
     },
-    cartridgeOverallLength: initialData?.cartridgeOverallLength ?? '',
-    notes: initialData?.notes || '',
-    favorite: initialData?.favorite || false
+    cartridgeOverallLength: '',
+    notes: '',
+    favorite: false
   });
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchCartridges(user.id);
+    }
+  }, [user?.id, fetchCartridges]);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        cartridge: initialData.cartridge || '',
+        bullet: {
+          brand: initialData.bullet.brand || '',
+          weight: initialData.bullet.weight?.toString() || '',
+        },
+        powder: {
+          brand: initialData.powder.brand || '',
+          weight: initialData.powder.weight?.toString() || '',
+        },
+        primer: initialData.primer || '',
+        brass: {
+          brand: initialData.brass.brand || '',
+          length: initialData.brass.length?.toString() || '',
+        },
+        cartridgeOverallLength: initialData.cartridgeOverallLength?.toString() || '',
+        notes: initialData.notes || '',
+        favorite: initialData.favorite || false
+      });
+    } else {
+      // Reset form when opening for new item
+      setFormData({
+        cartridge: '',
+        bullet: {
+          brand: '',
+          weight: '',
+        },
+        powder: {
+          brand: '',
+          weight: '',
+        },
+        primer: '',
+        brass: {
+          brand: '',
+          length: '',
+        },
+        cartridgeOverallLength: '',
+        notes: '',
+        favorite: false
+      });
+    }
+  }, [initialData, isOpen]);
 
   const handleCartridgeManagerClose = () => {
     setShowCartridgeManager(false);
@@ -44,12 +96,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
       fetchCartridges(user.id);
     }
   };
-
-  useEffect(() => {
-    if (user?.id) fetchCartridges(user.id);
-  }, [fetchCartridges]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +119,8 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl my-4">
@@ -93,6 +141,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                 value={formData.cartridge}
                 onChange={(e) => setFormData({ ...formData, cartridge: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                required
               >
                 <option value="">Select cartridge</option>
                 {userCartridges.map((cartridge) => (
@@ -127,7 +176,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         bullet: { ...formData.bullet, brand: e.target.value },
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    required
                   />
                 </div>
                 <div>
@@ -141,9 +190,9 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         bullet: { ...formData.bullet, weight: e.target.value },
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    min="0"
+                    required
                     step="0.1"
+                    min="0"
                   />
                 </div>
               </div>
@@ -163,7 +212,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         powder: { ...formData.powder, brand: e.target.value },
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    required
                   />
                 </div>
                 <div>
@@ -177,9 +226,9 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         powder: { ...formData.powder, weight: e.target.value },
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    min="0"
+                    required
                     step="0.1"
+                    min="0"
                   />
                 </div>
               </div>
@@ -191,7 +240,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                 type="text"
                 value={formData.primer}
                 onChange={(e) => setFormData({ ...formData, primer: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                required
               />
             </div>
 
@@ -209,7 +258,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         brass: { ...formData.brass, brand: e.target.value },
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    required
                   />
                 </div>
                 <div>
@@ -223,9 +272,9 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         brass: { ...formData.brass, length: e.target.value },
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    min="0"
+                    required
                     step="0.001"
+                    min="0"
                   />
                 </div>
               </div>
@@ -244,9 +293,9 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                     cartridgeOverallLength: e.target.value,
                   })
                 }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                min="0"
+                required
                 step="0.001"
+                min="0"
               />
             </div>
 

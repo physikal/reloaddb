@@ -111,7 +111,7 @@ export function LoadsListPage() {
             placeholder="Search loads..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            className="w-full"
           />
         </div>
         <select
