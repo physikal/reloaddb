@@ -108,7 +108,11 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <p className="text-gray-500">Powder</p>
-          <p className="font-medium">{load.powder.brand} {load.powder.weight}gr</p>
+          <p className="font-medium">{load.powder.brand}</p>
+          <p className="text-sm">
+            <span className="text-gray-500">Charge: </span>
+            <span className="font-medium">{load.powder.weight}gr</span>
+          </p>
         </div>
         <div>
           <p className="text-gray-500">Primer</p>
@@ -119,8 +123,14 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
           <p className="font-medium">{load.brass.brand}</p>
         </div>
         <div>
-          <p className="text-gray-500">COAL</p>
-          <p className="font-medium">{load.cartridgeOverallLength}"</p>
+          <p className="text-gray-500">Cartridge</p>
+          <p className="font-medium">COAL: {load.cartridgeOverallLength}"</p>
+          {load.cartridgeBaseToOgive && (
+            <p className="text-sm">
+              <span className="font-medium">CBTO: </span>
+              <span className="font-medium">{load.cartridgeBaseToOgive}"</span>
+            </p>
+          )}
         </div>
       </div>
 

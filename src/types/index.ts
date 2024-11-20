@@ -16,6 +16,7 @@ export interface Load {
     length: number;
   };
   cartridgeOverallLength: number;
+  cartridgeBaseToOgive?: number;
   notes?: string;
   favorite?: boolean;
   costPerRound?: number;
@@ -27,13 +28,4 @@ export interface Load {
   };
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  role: 'user' | 'admin';
-  twoFactorEnabled?: boolean;
-  twoFactorSecret?: string;
-  createdAt: Date;
 }

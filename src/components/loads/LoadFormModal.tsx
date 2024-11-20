@@ -35,6 +35,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
       length: '',
     },
     cartridgeOverallLength: '',
+    cartridgeBaseToOgive: '',
     notes: '',
     favorite: false
   });
@@ -63,11 +64,11 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
           length: initialData.brass.length?.toString() || '',
         },
         cartridgeOverallLength: initialData.cartridgeOverallLength?.toString() || '',
+        cartridgeBaseToOgive: initialData.cartridgeBaseToOgive?.toString() || '',
         notes: initialData.notes || '',
         favorite: initialData.favorite || false
       });
     } else {
-      // Reset form when opening for new item
       setFormData({
         cartridge: '',
         bullet: {
@@ -84,6 +85,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
           length: '',
         },
         cartridgeOverallLength: '',
+        cartridgeBaseToOgive: '',
         notes: '',
         favorite: false
       });
@@ -114,6 +116,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
         length: formData.brass.length === '' ? 0 : Number(formData.brass.length),
       },
       cartridgeOverallLength: formData.cartridgeOverallLength === '' ? 0 : Number(formData.cartridgeOverallLength),
+      cartridgeBaseToOgive: formData.cartridgeBaseToOgive === '' ? 0 : Number(formData.cartridgeBaseToOgive),
     };
     onSubmit(processedData);
     onClose();
@@ -141,7 +144,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                 value={formData.cartridge}
                 onChange={(e) => setFormData({ ...formData, cartridge: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                required
               >
                 <option value="">Select cartridge</option>
                 {userCartridges.map((cartridge) => (
@@ -163,6 +165,46 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
             </div>
 
             <div>
+              <h3 className="font-medium text-gray-900 mb-2">Cartridge Measurements</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cartridge Overall Length (COAL) (in)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.cartridgeOverallLength}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        cartridgeOverallLength: e.target.value,
+                      })
+                    }
+                    step="0.001"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cartridge Base to Ogive (CBTO) (in)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.cartridgeBaseToOgive}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        cartridgeBaseToOgive: e.target.value,
+                      })
+                    }
+                    step="0.001"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
               <h3 className="font-medium text-gray-900 mb-2">Bullet Details</h3>
               <div className="space-y-3">
                 <div>
@@ -176,7 +218,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         bullet: { ...formData.bullet, brand: e.target.value },
                       })
                     }
-                    required
                   />
                 </div>
                 <div>
@@ -190,7 +231,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         bullet: { ...formData.bullet, weight: e.target.value },
                       })
                     }
-                    required
                     step="0.1"
                     min="0"
                   />
@@ -212,11 +252,10 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         powder: { ...formData.powder, brand: e.target.value },
                       })
                     }
-                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Weight (gr)</label>
+                  <label className="block text-sm font-medium text-gray-700">Charge Weight (gr)</label>
                   <input
                     type="number"
                     value={formData.powder.weight}
@@ -226,7 +265,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         powder: { ...formData.powder, weight: e.target.value },
                       })
                     }
-                    required
                     step="0.1"
                     min="0"
                   />
@@ -240,7 +278,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                 type="text"
                 value={formData.primer}
                 onChange={(e) => setFormData({ ...formData, primer: e.target.value })}
-                required
               />
             </div>
 
@@ -258,7 +295,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         brass: { ...formData.brass, brand: e.target.value },
                       })
                     }
-                    required
                   />
                 </div>
                 <div>
@@ -272,31 +308,11 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         brass: { ...formData.brass, length: e.target.value },
                       })
                     }
-                    required
                     step="0.001"
                     min="0"
                   />
                 </div>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Cartridge Overall Length (in)
-              </label>
-              <input
-                type="number"
-                value={formData.cartridgeOverallLength}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    cartridgeOverallLength: e.target.value,
-                  })
-                }
-                required
-                step="0.001"
-                min="0"
-              />
             </div>
 
             <div>
