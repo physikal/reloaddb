@@ -29,3 +29,12 @@ export interface Load {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  role: 'user' | 'admin';
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  createdAt: Date;
+}

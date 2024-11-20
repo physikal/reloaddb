@@ -3,6 +3,7 @@ import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign, ChevronDown, Chevron
 import { Load } from '../../types';
 import { Button } from '../ui/Button';
 import { useState } from 'react';
+import { formatCurrency } from '../../utils/format';
 
 interface LoadCardProps {
   load: Load;
@@ -72,7 +73,7 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
             <div className="flex items-center">
               <DollarSign className="w-4 h-4 text-primary-600 mr-2" />
               <span className="font-medium text-primary-900">
-                {load.costPerRound.toFixed(4)} per round
+                {formatCurrency(load.costPerRound)} per round
               </span>
             </div>
             {showCostBreakdown ? (
@@ -86,19 +87,19 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
             <div className="bg-gray-50 rounded-md p-3 text-sm space-y-1">
               <div className="flex justify-between">
                 <span className="text-gray-600">Bullet:</span>
-                <span className="font-medium">{load.costBreakdown.bulletCost.toFixed(4)}</span>
+                <span className="font-medium">{formatCurrency(load.costBreakdown.bulletCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Powder:</span>
-                <span className="font-medium">{load.costBreakdown.powderCost.toFixed(4)}</span>
+                <span className="font-medium">{formatCurrency(load.costBreakdown.powderCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Primer:</span>
-                <span className="font-medium">{load.costBreakdown.primerCost.toFixed(4)}</span>
+                <span className="font-medium">{formatCurrency(load.costBreakdown.primerCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Brass:</span>
-                <span className="font-medium">{load.costBreakdown.brassCost.toFixed(4)}</span>
+                <span className="font-medium">{formatCurrency(load.costBreakdown.brassCost)}</span>
               </div>
             </div>
           )}
@@ -109,9 +110,9 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
         <div>
           <p className="text-gray-500">Powder</p>
           <p className="font-medium">{load.powder.brand}</p>
-          <p className="text-sm">
+          <p className="text-sm mt-1">
             <span className="text-gray-500">Charge: </span>
-            <span className="font-medium">{load.powder.weight}gr</span>
+            <span className="font-bold">{load.powder.weight}gr</span>
           </p>
         </div>
         <div>
@@ -124,13 +125,18 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
         </div>
         <div>
           <p className="text-gray-500">Cartridge</p>
-          <p className="font-medium">COAL: {load.cartridgeOverallLength}"</p>
-          {load.cartridgeBaseToOgive && (
+          <div className="space-y-1">
             <p className="text-sm">
-              <span className="font-medium">CBTO: </span>
-              <span className="font-medium">{load.cartridgeBaseToOgive}"</span>
+              <span className="font-bold">COAL: </span>
+              <span className="font-bold">{load.cartridgeOverallLength}"</span>
             </p>
-          )}
+            {load.cartridgeBaseToOgive && (
+              <p className="text-sm">
+                <span className="font-bold">CBTO: </span>
+                <span className="font-bold">{load.cartridgeBaseToOgive}"</span>
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

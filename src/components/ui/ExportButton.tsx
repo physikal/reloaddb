@@ -11,8 +11,7 @@ export function ExportButton({ onExport, label = 'Export to Excel' }: ExportButt
     <Button
       onClick={onExport}
       variant="secondary"
-      size="sm"
-      className="text-gray-700 hover:text-gray-900"
+      className="flex items-center"
     >
       <Download className="w-4 h-4 mr-2" />
       {label}
