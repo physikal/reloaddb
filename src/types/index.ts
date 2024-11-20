@@ -37,4 +37,25 @@ export interface User {
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
   createdAt: Date;
+  loadFormConfig?: LoadFormConfig;
+}
+
+export interface LoadFormConfig {
+  bullet: {
+    brand: boolean;
+    weight: boolean;
+  };
+  powder: {
+    brand: boolean;
+    weight: boolean;
+  };
+  primer: boolean;
+  brass: {
+    brand: boolean;
+    length: boolean;
+  };
+  cartridgeOverallLength: boolean;
+  cartridgeBaseToOgive: boolean;
+  notes: boolean;
+  cost: boolean;
 }
