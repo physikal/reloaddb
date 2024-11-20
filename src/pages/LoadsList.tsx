@@ -4,15 +4,15 @@ import { useAuthStore } from '../store/auth';
 import { useLoadsStore } from '../store/loads';
 import { LoadCard } from '../components/loads/LoadCard';
 import { Button } from '../components/ui/Button';
+import { ExportButton } from '../components/ui/ExportButton';
 import { Load } from '../types';
 import { LoadFormModal } from '../components/loads/LoadFormModal';
+import { exportLoadsToExcel } from '../utils/excelExport';
 
 export function LoadsListPage() {
   const { user } = useAuthStore();
   const { loads, loading, error, fetchLoads, deleteLoad, addLoad, updateLoad } = useLoadsStore();
   
-  console.log('LoadsList - User:', user?.id);
-  console.log('LoadsList - Current loads:', loads);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState<Load | undefined>();
@@ -21,7 +21,6 @@ export function LoadsListPage() {
 
   useEffect(() => {
     if (user?.id) {
-      console.log('LoadsList - Fetching loads for user:', user.id);
       fetchLoads(user.id);
     }
   }, [user?.id, fetchLoads]);
@@ -57,6 +56,10 @@ export function LoadsListPage() {
 
   const handleToggleFavorite = async (load: Load) => {
     await updateLoad(load.id, { favorite: !load.favorite });
+  };
+
+  const handleExport = () => {
+    exportLoadsToExcel(loads);
   };
 
   const filteredLoads = loads.filter(load => {
@@ -98,10 +101,13 @@ export function LoadsListPage() {
             {showFavoritesOnly ? 'Show All' : 'Show Favorites'}
           </Button>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Load
-        </Button>
+        <div className="flex space-x-4">
+          <ExportButton onExport={handleExport} />
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Load
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-4">
