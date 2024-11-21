@@ -1,6 +1,6 @@
 import { utils, writeFile } from 'xlsx';
 import { Load } from '../types';
-import { Ammunition, Bullet, Powder, Primer, Brass } from '../types/inventory';
+import { Ammunition, Bullet, Powder, Primer, Brass, Firearm } from '../types/inventory';
 
 export function exportLoadsToExcel(loads: Load[]) {
   const worksheet = utils.json_to_sheet(
@@ -34,9 +34,29 @@ export function exportInventoryToExcel(
   bullets: Bullet[],
   powder: Powder[],
   primers: Primer[],
-  brass: Brass[]
+  brass: Brass[],
+  firearms: Firearm[]
 ) {
   const workbook = utils.book_new();
+
+  // Firearms worksheet
+  const firearmsWorksheet = utils.json_to_sheet(
+    firearms.map(item => ({
+      'Manufacturer': item.manufacturer,
+      'Model': item.model,
+      'Serial Number': item.serialNumber,
+      'Type': item.type,
+      'Caliber': item.caliber,
+      'Barrel Length (in)': item.barrelLength || '',
+      'Purchase Date': item.purchaseDate?.toLocaleDateString() || '',
+      'Purchase Price': item.purchasePrice ? `$${item.purchasePrice.toFixed(2)}` : '',
+      'Condition': item.condition,
+      'Notes': item.notes || '',
+      'Created': item.createdAt?.toLocaleDateString(),
+      'Updated': item.updatedAt?.toLocaleDateString()
+    }))
+  );
+  utils.book_append_sheet(workbook, firearmsWorksheet, 'Firearms');
 
   // Ammunition worksheet
   const ammoWorksheet = utils.json_to_sheet(

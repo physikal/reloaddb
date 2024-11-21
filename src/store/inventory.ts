@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Ammunition, Bullet, Powder, Primer, Brass, InventoryType } from '../types/inventory';
+import { Ammunition, Bullet, Powder, Primer, Brass, Firearm, InventoryType } from '../types/inventory';
 
-type InventoryItem = Ammunition | Bullet | Powder | Primer | Brass;
+type InventoryItem = Ammunition | Bullet | Powder | Primer | Brass | Firearm;
 
 interface InventoryState {
   ammunition: Ammunition[];
@@ -11,6 +11,7 @@ interface InventoryState {
   powder: Powder[];
   primers: Primer[];
   brass: Brass[];
+  firearms: Firearm[];
   loading: boolean;
   error: string | null;
   fetchInventory: (userId: string, type: InventoryType) => Promise<void>;
@@ -25,6 +26,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
   powder: [],
   primers: [],
   brass: [],
+  firearms: [],
   loading: false,
   error: null,
 
@@ -41,7 +43,8 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
+        updatedAt: doc.data().updatedAt?.toDate(),
+        purchaseDate: doc.data().purchaseDate?.toDate()
       }));
 
       set(state => ({ 

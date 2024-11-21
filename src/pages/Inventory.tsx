@@ -11,6 +11,7 @@ import { exportInventoryToExcel } from '../utils/excelExport';
 import { clsx } from 'clsx';
 
 const INVENTORY_TYPES: { value: InventoryType; label: string }[] = [
+  { value: 'firearms', label: 'Firearms' },
   { value: 'ammunition', label: 'Ammunition' },
   { value: 'bullets', label: 'Bullets' },
   { value: 'powder', label: 'Powder' },
@@ -20,8 +21,8 @@ const INVENTORY_TYPES: { value: InventoryType; label: string }[] = [
 
 export function InventoryPage() {
   const { user } = useAuthStore();
-  const { ammunition, bullets, powder, primers, brass, loading, error, fetchInventory } = useInventoryStore();
-  const [activeType, setActiveType] = useState<InventoryType>('ammunition');
+  const { ammunition, bullets, powder, primers, brass, firearms, loading, error, fetchInventory } = useInventoryStore();
+  const [activeType, setActiveType] = useState<InventoryType>('firearms');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -32,7 +33,7 @@ export function InventoryPage() {
   }, [user?.id, activeType, fetchInventory]);
 
   const handleExport = () => {
-    exportInventoryToExcel(ammunition, bullets, powder, primers, brass);
+    exportInventoryToExcel(ammunition, bullets, powder, primers, brass, firearms);
   };
 
   const inventoryData = {
@@ -40,7 +41,8 @@ export function InventoryPage() {
     bullets,
     powder,
     primers,
-    brass
+    brass,
+    firearms
   }[activeType];
 
   return (

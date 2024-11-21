@@ -45,4 +45,16 @@ export interface Brass extends BaseInventoryItem {
   condition: 'new' | 'once-fired' | 'reloaded';
 }
 
-export type InventoryType = 'ammunition' | 'bullets' | 'powder' | 'primers' | 'brass';
+export interface Firearm extends BaseInventoryItem {
+  manufacturer: string;
+  model: string;
+  serialNumber?: string;
+  type?: 'Rifle' | 'Pistol' | 'Shotgun' | 'Other';
+  caliber?: string;
+  barrelLength?: number; // in inches
+  purchaseDate?: Date;
+  purchasePrice?: number;
+  condition?: 'New' | 'Excellent' | 'Good' | 'Fair' | 'Poor';
+}
+
+export type InventoryType = 'ammunition' | 'bullets' | 'powder' | 'primers' | 'brass' | 'firearms';

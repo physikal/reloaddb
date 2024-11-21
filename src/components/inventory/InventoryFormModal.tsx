@@ -28,6 +28,21 @@ const BRASS_CONDITIONS = [
   'reloaded'
 ];
 
+const FIREARM_TYPES = [
+  'Rifle',
+  'Pistol',
+  'Shotgun',
+  'Other'
+];
+
+const FIREARM_CONDITIONS = [
+  'New',
+  'Excellent',
+  'Good',
+  'Fair',
+  'Poor'
+];
+
 export function InventoryFormModal({ isOpen, onClose, type, initialData }: InventoryFormModalProps) {
   const { addItem, updateItem } = useInventoryStore();
   const { user } = useAuthStore();
@@ -37,7 +52,6 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
     if (initialData) {
       setFormData(initialData);
     } else {
-      // Reset form when opening for new item
       setFormData({});
     }
   }, [initialData, isOpen]);
@@ -57,7 +71,8 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
 
     const itemData = {
       ...formData,
-      userId: user.id
+      userId: user.id,
+      purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : undefined
     };
 
     try {
@@ -74,6 +89,96 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
 
   const renderFormFields = () => {
     switch (type) {
+      case 'firearms':
+        return (
+          <>
+            <div>
+              <label>Manufacturer</label>
+              <input
+                type="text"
+                value={formData.manufacturer || ''}
+                onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label>Model</label>
+              <input
+                type="text"
+                value={formData.model || ''}
+                onChange={(e) => handleInputChange('model', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label>Serial Number (optional)</label>
+              <input
+                type="text"
+                value={formData.serialNumber || ''}
+                onChange={(e) => handleInputChange('serialNumber', e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Type (optional)</label>
+              <select
+                value={formData.type || ''}
+                onChange={(e) => handleInputChange('type', e.target.value)}
+              >
+                <option value="">Select type</option>
+                {FIREARM_TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label>Caliber (optional)</label>
+              <input
+                type="text"
+                value={formData.caliber || ''}
+                onChange={(e) => handleInputChange('caliber', e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Barrel Length (inches) (optional)</label>
+              <input
+                type="number"
+                step="0.125"
+                value={formData.barrelLength || ''}
+                onChange={(e) => handleInputChange('barrelLength', parseFloat(e.target.value))}
+              />
+            </div>
+            <div>
+              <label>Purchase Date (optional)</label>
+              <input
+                type="date"
+                value={formData.purchaseDate ? new Date(formData.purchaseDate).toISOString().split('T')[0] : ''}
+                onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Purchase Price ($) (optional)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.purchasePrice || ''}
+                onChange={(e) => handleInputChange('purchasePrice', parseFloat(e.target.value))}
+              />
+            </div>
+            <div>
+              <label>Condition (optional)</label>
+              <select
+                value={formData.condition || ''}
+                onChange={(e) => handleInputChange('condition', e.target.value)}
+              >
+                <option value="">Select condition</option>
+                {FIREARM_CONDITIONS.map(condition => (
+                  <option key={condition} value={condition}>{condition}</option>
+                ))}
+              </select>
+            </div>
+          </>
+        );
+
       case 'ammunition':
         return (
           <>
