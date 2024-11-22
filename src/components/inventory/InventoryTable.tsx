@@ -50,6 +50,11 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
   const filteredData = data.filter(item => {
     const searchStr = searchTerm.toLowerCase();
     switch (type) {
+      case 'firearms':
+        return item.manufacturer?.toLowerCase().includes(searchStr) ||
+               item.model?.toLowerCase().includes(searchStr) ||
+               item.caliber?.toLowerCase().includes(searchStr) ||
+               item.type?.toLowerCase().includes(searchStr);
       case 'ammunition':
         return item.caliber?.toLowerCase().includes(searchStr) ||
                item.sku?.toLowerCase().includes(searchStr) ||
@@ -96,6 +101,19 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
 
   const renderTableHeaders = () => {
     switch (type) {
+      case 'firearms':
+        return (
+          <tr>
+            <SortableHeader field="manufacturer" label="Manufacturer" />
+            <SortableHeader field="model" label="Model" />
+            <SortableHeader field="type" label="Type" />
+            <SortableHeader field="caliber" label="Caliber" />
+            <SortableHeader field="barrelLength" label="Barrel Length" />
+            <SortableHeader field="condition" label="Condition" />
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        );
       case 'ammunition':
         return (
           <tr>
@@ -162,6 +180,19 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
     const baseClasses = "px-6 py-4 whitespace-nowrap text-sm text-gray-900";
     
     switch (type) {
+      case 'firearms':
+        return (
+          <tr key={item.id}>
+            <td className={baseClasses}>{item.manufacturer || '-'}</td>
+            <td className={baseClasses}>{item.model || '-'}</td>
+            <td className={baseClasses}>{item.type || '-'}</td>
+            <td className={baseClasses}>{item.caliber || '-'}</td>
+            <td className={baseClasses}>{item.barrelLength ? `${item.barrelLength}"` : '-'}</td>
+            <td className={baseClasses}>{item.condition || '-'}</td>
+            <td className={baseClasses}>{item.notes || '-'}</td>
+            <td className={baseClasses}>{renderActions(item)}</td>
+          </tr>
+        );
       case 'ammunition':
         return (
           <tr key={item.id}>
@@ -169,7 +200,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.sku}</td>
             <td className={baseClasses}>{item.quantity}</td>
             <td className={baseClasses}>{item.lotNumber}</td>
-            <td className={baseClasses}>{item.notes}</td>
+            <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
         );
@@ -181,7 +212,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.weight}</td>
             <td className={baseClasses}>{item.type}</td>
             <td className={baseClasses}>{item.quantity}</td>
-            <td className={baseClasses}>{item.notes}</td>
+            <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
         );
@@ -192,7 +223,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.sku}</td>
             <td className={baseClasses}>{item.weight}</td>
             <td className={baseClasses}>{item.lotNumber}</td>
-            <td className={baseClasses}>{item.notes}</td>
+            <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
         );
@@ -204,7 +235,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.type}</td>
             <td className={baseClasses}>{item.quantity}</td>
             <td className={baseClasses}>{item.lotNumber}</td>
-            <td className={baseClasses}>{item.notes}</td>
+            <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
         );
@@ -215,7 +246,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.manufacturer}</td>
             <td className={baseClasses}>{item.quantity}</td>
             <td className={baseClasses}>{item.condition}</td>
-            <td className={baseClasses}>{item.notes}</td>
+            <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
         );

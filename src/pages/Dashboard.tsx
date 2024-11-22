@@ -1,13 +1,14 @@
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { LogOut, Database, UserCircle } from 'lucide-react';
+import { LogOut, Database, UserCircle, Package, Calculator, Target } from 'lucide-react';
 import { LoadsListPage } from './LoadsList';
 import { Button } from '../components/ui/Button';
 import { AdminPanel } from './AdminPanel';
 import { CprCalculatorPage } from './CprCalculator';
 import { ProfilePage } from './Profile';
 import { InventoryPage } from './Inventory';
+import { RangeLogPage } from './RangeLog';
 import { useAuthStore } from '../store/auth';
 import { DonateButton } from '../components/ui/DonateButton';
 import { useState } from 'react';
@@ -64,6 +65,7 @@ export default function Dashboard() {
                             `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
                           }
                         >
+                          <Calculator className="w-4 h-4 inline-block mr-2" />
                           CPR Calculator
                         </NavLink>
                         <NavLink
@@ -72,7 +74,17 @@ export default function Dashboard() {
                             `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
                           }
                         >
+                          <Package className="w-4 h-4 inline-block mr-2" />
                           Inventory
+                        </NavLink>
+                        <NavLink
+                          to="/range-log"
+                          className={({ isActive }) =>
+                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
+                          }
+                        >
+                          <Target className="w-4 h-4 inline-block mr-2" />
+                          Range Log
                         </NavLink>
                       </div>
                     </div>
@@ -118,6 +130,7 @@ export default function Dashboard() {
           <Route path="/" element={<LoadsListPage />} />
           <Route path="/calculator" element={<CprCalculatorPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/range-log" element={<RangeLogPage />} />
           {user?.role === 'admin' && (
             <Route path="/admin" element={<AdminPanel />} />
           )}

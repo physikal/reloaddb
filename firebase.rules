@@ -14,6 +14,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function isValidUserData(data) {
+      return data.keys().hasAll(['userId']) && data.userId == request.auth.uid;
+    }
+
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
@@ -27,7 +31,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
       allow update, delete: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );
@@ -36,7 +40,79 @@ service cloud.firestore {
     // Cartridges collection
     match /cartridges/{cartridgeId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Inventory collections
+    match /firearms/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    match /ammunition/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    match /bullets/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    match /powder/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    match /primers/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    match /brass/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Range Days collection
+    match /rangeDays/{rangeDayId} {
+      allow read: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && isValidUserData(request.resource.data);
       allow update, delete: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );

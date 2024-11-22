@@ -71,8 +71,7 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
 
     const itemData = {
       ...formData,
-      userId: user.id,
-      purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : undefined
+      userId: user.id
     };
 
     try {
@@ -98,7 +97,6 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
                 type="text"
                 value={formData.manufacturer || ''}
                 onChange={(e) => handleInputChange('manufacturer', e.target.value)}
-                required
               />
             </div>
             <div>
@@ -107,7 +105,6 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
                 type="text"
                 value={formData.model || ''}
                 onChange={(e) => handleInputChange('model', e.target.value)}
-                required
               />
             </div>
             <div>
@@ -119,7 +116,7 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
               />
             </div>
             <div>
-              <label>Type (optional)</label>
+              <label>Type</label>
               <select
                 value={formData.type || ''}
                 onChange={(e) => handleInputChange('type', e.target.value)}
@@ -131,7 +128,7 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
               </select>
             </div>
             <div>
-              <label>Caliber (optional)</label>
+              <label>Caliber</label>
               <input
                 type="text"
                 value={formData.caliber || ''}
@@ -139,7 +136,7 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
               />
             </div>
             <div>
-              <label>Barrel Length (inches) (optional)</label>
+              <label>Barrel Length (inches)</label>
               <input
                 type="number"
                 step="0.125"
@@ -152,7 +149,7 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
               <input
                 type="date"
                 value={formData.purchaseDate ? new Date(formData.purchaseDate).toISOString().split('T')[0] : ''}
-                onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                onChange={(e) => handleInputChange('purchaseDate', new Date(e.target.value))}
               />
             </div>
             <div>
@@ -165,7 +162,7 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
               />
             </div>
             <div>
-              <label>Condition (optional)</label>
+              <label>Condition</label>
               <select
                 value={formData.condition || ''}
                 onChange={(e) => handleInputChange('condition', e.target.value)}

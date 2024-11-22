@@ -46,8 +46,8 @@ export interface Brass extends BaseInventoryItem {
 }
 
 export interface Firearm extends BaseInventoryItem {
-  manufacturer: string;
-  model: string;
+  manufacturer?: string;
+  model?: string;
   serialNumber?: string;
   type?: 'Rifle' | 'Pistol' | 'Shotgun' | 'Other';
   caliber?: string;
