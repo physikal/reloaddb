@@ -4,8 +4,28 @@ import { Button } from '../ui/Button';
 import { useLoadsStore } from '../../store/loads';
 import { useCartridgesStore } from '../../store/cartridges';
 import { useAuthStore } from '../../store/auth';
+import { Load, LoadFormConfig } from '../../types';
 import { CartridgeManager } from './CartridgeManager';
-import { Load } from '../../types';
+
+const DEFAULT_CONFIG: LoadFormConfig = {
+  bullet: {
+    brand: true,
+    weight: true,
+  },
+  powder: {
+    brand: true,
+    weight: true,
+  },
+  primer: true,
+  brass: {
+    brand: true,
+    length: true,
+  },
+  cartridgeOverallLength: true,
+  cartridgeBaseToOgive: true,
+  notes: true,
+  cost: true,
+};
 
 interface LoadFormModalProps {
   isOpen: boolean;
@@ -18,7 +38,9 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
   const { cartridges, fetchCartridges } = useCartridgesStore();
   const { user } = useAuthStore();
   const [showCartridgeManager, setShowCartridgeManager] = useState(false);
+  const config = user?.loadFormConfig || DEFAULT_CONFIG;
   const userCartridges = cartridges.filter(c => c.userId === user?.id);
+
   const [formData, setFormData] = useState({
     cartridge: '',
     bullet: {
@@ -35,6 +57,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
       length: '',
     },
     cartridgeOverallLength: '',
+    cartridgeBaseToOgive: '',
     notes: '',
     favorite: false
   });
@@ -63,11 +86,11 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
           length: initialData.brass.length?.toString() || '',
         },
         cartridgeOverallLength: initialData.cartridgeOverallLength?.toString() || '',
+        cartridgeBaseToOgive: initialData.cartridgeBaseToOgive?.toString() || '',
         notes: initialData.notes || '',
         favorite: initialData.favorite || false
       });
     } else {
-      // Reset form when opening for new item
       setFormData({
         cartridge: '',
         bullet: {
@@ -84,6 +107,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
           length: '',
         },
         cartridgeOverallLength: '',
+        cartridgeBaseToOgive: '',
         notes: '',
         favorite: false
       });
@@ -100,20 +124,15 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const processedData = {
-      ...formData,
-      bullet: {
-        ...formData.bullet,
-        weight: formData.bullet.weight === '' ? 0 : Number(formData.bullet.weight),
-      },
-      powder: {
-        ...formData.powder,
-        weight: formData.powder.weight === '' ? 0 : Number(formData.powder.weight),
-      },
-      brass: {
-        ...formData.brass,
-        length: formData.brass.length === '' ? 0 : Number(formData.brass.length),
-      },
-      cartridgeOverallLength: formData.cartridgeOverallLength === '' ? 0 : Number(formData.cartridgeOverallLength),
+      cartridge: formData.cartridge,
+      bullet: formData.bullet,
+      powder: formData.powder,
+      primer: formData.primer,
+      brass: formData.brass,
+      cartridgeOverallLength: formData.cartridgeOverallLength,
+      cartridgeBaseToOgive: formData.cartridgeBaseToOgive || undefined,
+      notes: formData.notes,
+      favorite: formData.favorite
     };
     onSubmit(processedData);
     onClose();
@@ -141,7 +160,6 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                 value={formData.cartridge}
                 onChange={(e) => setFormData({ ...formData, cartridge: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                required
               >
                 <option value="">Select cartridge</option>
                 {userCartridges.map((cartridge) => (
@@ -162,153 +180,199 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
               </div>
             </div>
 
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Bullet Details</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Bullet</label>
-                  <input
-                    type="text"
-                    value={formData.bullet.brand}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        bullet: { ...formData.bullet, brand: e.target.value },
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Weight (gr)</label>
-                  <input
-                    type="number"
-                    value={formData.bullet.weight}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        bullet: { ...formData.bullet, weight: e.target.value },
-                      })
-                    }
-                    required
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Powder Details</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Brand</label>
-                  <input
-                    type="text"
-                    value={formData.powder.brand}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        powder: { ...formData.powder, brand: e.target.value },
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Weight (gr)</label>
-                  <input
-                    type="number"
-                    value={formData.powder.weight}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        powder: { ...formData.powder, weight: e.target.value },
-                      })
-                    }
-                    required
-                    step="0.1"
-                    min="0"
-                  />
+            {(config.bullet.brand || config.bullet.weight) && (
+              <div>
+                <h3 className="font-medium text-gray-900 mb-2">Bullet Details</h3>
+                <div className="space-y-3">
+                  {config.bullet.brand && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Bullet</label>
+                      <input
+                        type="text"
+                        value={formData.bullet.brand}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            bullet: { ...formData.bullet, brand: e.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                  {config.bullet.weight && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Weight (gr)</label>
+                      <input
+                        type="number"
+                        value={formData.bullet.weight}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            bullet: { ...formData.bullet, weight: e.target.value },
+                          })
+                        }
+                        step="0.1"
+                        min="0"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Primer</label>
-              <input
-                type="text"
-                value={formData.primer}
-                onChange={(e) => setFormData({ ...formData, primer: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Brass Details</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Brand</label>
-                  <input
-                    type="text"
-                    value={formData.brass.brand}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brass: { ...formData.brass, brand: e.target.value },
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Length (in)</label>
-                  <input
-                    type="number"
-                    value={formData.brass.length}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brass: { ...formData.brass, length: e.target.value },
-                      })
-                    }
-                    required
-                    step="0.001"
-                    min="0"
-                  />
+            {(config.powder.brand || config.powder.weight) && (
+              <div>
+                <h3 className="font-medium text-gray-900 mb-2">Powder Details</h3>
+                <div className="space-y-3">
+                  {config.powder.brand && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Brand</label>
+                      <input
+                        type="text"
+                        value={formData.powder.brand}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            powder: { ...formData.powder, brand: e.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                  {config.powder.weight && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Charge Weight (gr)</label>
+                      <input
+                        type="number"
+                        value={formData.powder.weight}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            powder: { ...formData.powder, weight: e.target.value },
+                          })
+                        }
+                        step="0.1"
+                        min="0"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Cartridge Overall Length (in)
-              </label>
-              <input
-                type="number"
-                value={formData.cartridgeOverallLength}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    cartridgeOverallLength: e.target.value,
-                  })
-                }
-                required
-                step="0.001"
-                min="0"
-              />
-            </div>
+            {config.primer && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Primer</label>
+                <input
+                  type="text"
+                  value={formData.primer}
+                  onChange={(e) => setFormData({ ...formData, primer: e.target.value })}
+                />
+              </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Notes</label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={4}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                placeholder="Add any additional notes about this load..."
-              />
-            </div>
+            {(config.brass.brand || config.brass.length) && (
+              <div>
+                <h3 className="font-medium text-gray-900 mb-2">Brass Details</h3>
+                <div className="space-y-3">
+                  {config.brass.brand && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Brand</label>
+                      <input
+                        type="text"
+                        value={formData.brass.brand}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            brass: { ...formData.brass, brand: e.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                  {config.brass.length && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Length (in)</label>
+                      <input
+                        type="number"
+                        value={formData.brass.length}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            brass: { ...formData.brass, length: e.target.value },
+                          })
+                        }
+                        step="0.001"
+                        min="0"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {(config.cartridgeOverallLength || config.cartridgeBaseToOgive) && (
+              <div>
+                <h3 className="font-medium text-gray-900 mb-2">Cartridge Measurements</h3>
+                <div className="space-y-3">
+                  {config.cartridgeOverallLength && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Cartridge Overall Length (COAL) (in)
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.cartridgeOverallLength}
+                        onChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            cartridgeOverallLength: e.target.value.includes('.') ? e.target.value : e.target.value + '.000'
+                          }))
+                        }
+                        step="0.001"
+                        min="0"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
+                      />
+                    </div>
+                  )}
+                  {config.cartridgeBaseToOgive && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Cartridge Base to Ogive (CBTO) (in)
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.cartridgeBaseToOgive}
+                        onChange={(e) =>
+                          setFormData(prev => ({
+                            ...prev,
+                            cartridgeBaseToOgive: e.target.value.includes('.') ? e.target.value : e.target.value + '.000'
+                          }))
+                        }
+                        step="0.001"
+                        min="0"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {config.notes && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Add any additional notes about this load..."
+                />
+              </div>
+            )}
 
             <div className="flex items-center">
               <input

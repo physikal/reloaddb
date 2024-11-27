@@ -124,21 +124,15 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const processedData = {
-      ...formData,
-      bullet: {
-        ...formData.bullet,
-        weight: formData.bullet.weight === '' ? 0 : Number(formData.bullet.weight),
-      },
-      powder: {
-        ...formData.powder,
-        weight: formData.powder.weight === '' ? 0 : Number(formData.powder.weight),
-      },
-      brass: {
-        ...formData.brass,
-        length: formData.brass.length === '' ? 0 : Number(formData.brass.length),
-      },
-      cartridgeOverallLength: formData.cartridgeOverallLength === '' ? 0 : Number(formData.cartridgeOverallLength),
-      cartridgeBaseToOgive: formData.cartridgeBaseToOgive === '' ? 0 : Number(formData.cartridgeBaseToOgive),
+      cartridge: formData.cartridge,
+      bullet: formData.bullet,
+      powder: formData.powder,
+      primer: formData.primer,
+      brass: formData.brass,
+      cartridgeOverallLength: formData.cartridgeOverallLength,
+      cartridgeBaseToOgive: formData.cartridgeBaseToOgive || undefined,
+      notes: formData.notes,
+      favorite: formData.favorite
     };
     onSubmit(processedData);
     onClose();
@@ -330,13 +324,15 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         type="number"
                         value={formData.cartridgeOverallLength}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            cartridgeOverallLength: e.target.value,
-                          })
+                          setFormData(prev => ({
+                            ...prev,
+                            cartridgeOverallLength: e.target.value.includes('.') ? e.target.value : e.target.value + '.000'
+                          }))
                         }
                         step="0.001"
                         min="0"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
                       />
                     </div>
                   )}
@@ -349,13 +345,15 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                         type="number"
                         value={formData.cartridgeBaseToOgive}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            cartridgeBaseToOgive: e.target.value,
-                          })
+                          setFormData(prev => ({
+                            ...prev,
+                            cartridgeBaseToOgive: e.target.value.includes('.') ? e.target.value : e.target.value + '.000'
+                          }))
                         }
                         step="0.001"
                         min="0"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
                       />
                     </div>
                   )}

@@ -5,7 +5,9 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Shield, Key, Smartphone } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
+import { LoadFormConfig } from '../components/profile/LoadFormConfig';
 import { useAuthStore } from '../store/auth';
+import { generateSecret, verifyToken, generateQRCodeUrl } from '../lib/2fa';
 
 export function ProfilePage() {
   const { user } = useAuthStore();
@@ -17,7 +19,7 @@ export function ProfilePage() {
   const [is2FAEnabled, setIs2FAEnabled] = useState(user?.twoFactorEnabled || false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [secret2FA] = useState('JBSWY3DPEHPK3PXP'); // This should be generated securely on the backend
+  const [secret2FA, setSecret2FA] = useState('');
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,11 +50,14 @@ export function ProfilePage() {
 
   const handle2FAToggle = async () => {
     if (!is2FAEnabled) {
+      const newSecret = generateSecret();
+      setSecret2FA(newSecret);
       setShowQRCode(true);
     } else {
       try {
         await updateDoc(doc(db, 'users', user!.id), {
-          twoFactorEnabled: false
+          twoFactorEnabled: false,
+          twoFactorSecret: null
         });
         setIs2FAEnabled(false);
         setSuccess('2FA has been disabled');
@@ -63,9 +68,15 @@ export function ProfilePage() {
   };
 
   const handleVerify2FA = async () => {
-    // In a real app, verify the code against the secret on the backend
-    if (verificationCode === '123456') { // This is just for demonstration
-      try {
+    if (!secret2FA || !verificationCode) {
+      setError('Please enter a verification code');
+      return;
+    }
+
+    try {
+      const isValid = verifyToken(verificationCode, secret2FA);
+      
+      if (isValid) {
         await updateDoc(doc(db, 'users', user!.id), {
           twoFactorEnabled: true,
           twoFactorSecret: secret2FA
@@ -73,13 +84,15 @@ export function ProfilePage() {
         setIs2FAEnabled(true);
         setShowQRCode(false);
         setSuccess('2FA has been enabled successfully');
-      } catch (err) {
-        setError('Failed to enable 2FA');
+      } else {
+        setError('Invalid verification code');
       }
-    } else {
-      setError('Invalid verification code');
+    } catch (err) {
+      setError('Failed to enable 2FA');
     }
   };
+
+  const qrCodeUrl = user?.email ? generateQRCodeUrl(secret2FA, user.email) : '';
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
@@ -165,7 +178,7 @@ export function ProfilePage() {
             <div className="mt-6 space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg inline-block">
                 <QRCodeSVG
-                  value={`otpauth://totp/ReloadDB:${user?.email}?secret=${secret2FA}&issuer=ReloadDB`}
+                  value={qrCodeUrl}
                   size={200}
                 />
               </div>
@@ -188,6 +201,8 @@ export function ProfilePage() {
           )}
         </div>
       </div>
+
+      <LoadFormConfig />
     </div>
   );
 }

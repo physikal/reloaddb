@@ -1,19 +1,22 @@
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { LogOut, Database, UserCircle, Package } from 'lucide-react';
+import { LogOut, Database, UserCircle, Package, Calculator, Target } from 'lucide-react';
 import { LoadsListPage } from './LoadsList';
 import { Button } from '../components/ui/Button';
 import { AdminPanel } from './AdminPanel';
 import { CprCalculatorPage } from './CprCalculator';
 import { ProfilePage } from './Profile';
 import { InventoryPage } from './Inventory';
+import { RangeLogPage } from './RangeLog';
 import { useAuthStore } from '../store/auth';
 import { DonateButton } from '../components/ui/DonateButton';
+import { useState } from 'react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
 
   async function handleLogout() {
     try {
@@ -45,23 +48,48 @@ export default function Dashboard() {
                 >
                   My Loads
                 </NavLink>
-                <NavLink
-                  to="/calculator"
-                  className={({ isActive }) =>
-                    `${isActive ? 'border-primary-500' : 'border-transparent'} text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`
-                  }
-                >
-                  CPR Calculator
-                </NavLink>
-                <NavLink
-                  to="/inventory"
-                  className={({ isActive }) =>
-                    `${isActive ? 'border-primary-500' : 'border-transparent'} text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`
-                  }
-                >
-                  <Package className="w-4 h-4 mr-1" />
-                  Inventory
-                </NavLink>
+                <div className="relative group">
+                  <button
+                    className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-gray-300 h-16"
+                    onClick={() => setShowToolsMenu(!showToolsMenu)}
+                    onBlur={() => setTimeout(() => setShowToolsMenu(false), 100)}
+                  >
+                    Tools
+                  </button>
+                  {showToolsMenu && (
+                    <div className="absolute left-0 top-14 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1">
+                        <NavLink
+                          to="/calculator"
+                          className={({ isActive }) =>
+                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
+                          }
+                        >
+                          <Calculator className="w-4 h-4 inline-block mr-2" />
+                          CPR Calculator
+                        </NavLink>
+                        <NavLink
+                          to="/inventory"
+                          className={({ isActive }) =>
+                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
+                          }
+                        >
+                          <Package className="w-4 h-4 inline-block mr-2" />
+                          Inventory
+                        </NavLink>
+                        <NavLink
+                          to="/range-log"
+                          className={({ isActive }) =>
+                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
+                          }
+                        >
+                          <Target className="w-4 h-4 inline-block mr-2" />
+                          Range Log
+                        </NavLink>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {user?.role === 'admin' && (
                   <NavLink
                     to="/admin"
@@ -78,7 +106,7 @@ export default function Dashboard() {
                     `${isActive ? 'border-primary-500' : 'border-transparent'} text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`
                   }
                 >
-                  <UserCircle className="w-4 h-4 mr-1" />
+                  <UserCircle className="w-4 h-4 mr-2" />
                   Profile
                 </NavLink>
               </div>
@@ -86,7 +114,7 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <DonateButton />
               <Button
-                variant=" primary"
+                variant="primary"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -102,6 +130,7 @@ export default function Dashboard() {
           <Route path="/" element={<LoadsListPage />} />
           <Route path="/calculator" element={<CprCalculatorPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/range-log" element={<RangeLogPage />} />
           {user?.role === 'admin' && (
             <Route path="/admin" element={<AdminPanel />} />
           )}

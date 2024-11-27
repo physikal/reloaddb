@@ -3,12 +3,15 @@ import { Package, Plus } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useInventoryStore } from '../store/inventory';
 import { Button } from '../components/ui/Button';
+import { ExportButton } from '../components/ui/ExportButton';
 import { InventoryType } from '../types/inventory';
 import { InventoryTable } from '../components/inventory/InventoryTable';
 import { InventoryFormModal } from '../components/inventory/InventoryFormModal';
+import { exportInventoryToExcel } from '../utils/excelExport';
 import { clsx } from 'clsx';
 
 const INVENTORY_TYPES: { value: InventoryType; label: string }[] = [
+  { value: 'firearms', label: 'Firearms' },
   { value: 'ammunition', label: 'Ammunition' },
   { value: 'bullets', label: 'Bullets' },
   { value: 'powder', label: 'Powder' },
@@ -18,8 +21,8 @@ const INVENTORY_TYPES: { value: InventoryType; label: string }[] = [
 
 export function InventoryPage() {
   const { user } = useAuthStore();
-  const { ammunition, bullets, powder, primers, brass, loading, error, fetchInventory } = useInventoryStore();
-  const [activeType, setActiveType] = useState<InventoryType>('ammunition');
+  const { ammunition, bullets, powder, primers, brass, firearms, loading, error, fetchInventory } = useInventoryStore();
+  const [activeType, setActiveType] = useState<InventoryType>('firearms');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -29,12 +32,17 @@ export function InventoryPage() {
     }
   }, [user?.id, activeType, fetchInventory]);
 
+  const handleExport = () => {
+    exportInventoryToExcel(ammunition, bullets, powder, primers, brass, firearms);
+  };
+
   const inventoryData = {
     ammunition,
     bullets,
     powder,
     primers,
-    brass
+    brass,
+    firearms
   }[activeType];
 
   return (
@@ -44,10 +52,13 @@ export function InventoryPage() {
           <Package className="w-8 h-8 text-primary-600" />
           <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex space-x-4">
+          <ExportButton onExport={handleExport} />
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Item
+          </Button>
+        </div>
       </div>
 
       {error && (
