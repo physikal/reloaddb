@@ -3,26 +3,25 @@ import { Plus, Star } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useLoadsStore } from '../store/loads';
 import { LoadCard } from '../components/loads/LoadCard';
-import { LoadsTable } from '../components/loads/LoadsTable';
 import { Button } from '../components/ui/Button';
 import { Load } from '../types';
 import { LoadFormModal } from '../components/loads/LoadFormModal';
-import { ExportButton } from '../components/ui/ExportButton';
-import { exportLoadsToExcel } from '../utils/excelExport';
-import { ViewToggle } from '../components/ui/ViewToggle';
 
 export function LoadsListPage() {
   const { user } = useAuthStore();
   const { loads, loading, error, fetchLoads, deleteLoad, addLoad, updateLoad } = useLoadsStore();
+  
+  console.log('LoadsList - User:', user?.id);
+  console.log('LoadsList - Current loads:', loads);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState<Load | undefined>();
   const [selectedCartridge, setSelectedCartridge] = useState<string>('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [view, setView] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     if (user?.id) {
+      console.log('LoadsList - Fetching loads for user:', user.id);
       fetchLoads(user.id);
     }
   }, [user?.id, fetchLoads]);
@@ -58,10 +57,6 @@ export function LoadsListPage() {
 
   const handleToggleFavorite = async (load: Load) => {
     await updateLoad(load.id, { favorite: !load.favorite });
-  };
-
-  const handleExport = () => {
-    exportLoadsToExcel(loads);
   };
 
   const filteredLoads = loads.filter(load => {
@@ -102,15 +97,11 @@ export function LoadsListPage() {
             <Star className={`w-4 h-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
             {showFavoritesOnly ? 'Show All' : 'Show Favorites'}
           </Button>
-          <ViewToggle view={view} onViewChange={setView} />
         </div>
-        <div className="flex space-x-4">
-          <ExportButton onExport={handleExport} />
-          <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Load
-          </Button>
-        </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Load
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-4">
@@ -135,28 +126,18 @@ export function LoadsListPage() {
         </select>
       </div>
 
-      {view === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLoads.map(load => (
-            <LoadCard
-              key={load.id}
-              load={load}
-              onEdit={handleEdit}
-              onDelete={deleteLoad}
-              onDuplicate={handleDuplicate}
-              onToggleFavorite={handleToggleFavorite}
-            />
-          ))}
-        </div>
-      ) : (
-        <LoadsTable
-          loads={filteredLoads}
-          onEdit={handleEdit}
-          onDelete={deleteLoad}
-          onDuplicate={handleDuplicate}
-          onToggleFavorite={handleToggleFavorite}
-        />
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredLoads.map(load => (
+          <LoadCard
+            key={load.id}
+            load={load}
+            onEdit={handleEdit}
+            onDelete={deleteLoad}
+            onDuplicate={handleDuplicate}
+            onToggleFavorite={handleToggleFavorite}
+          />
+        ))}
+      </div>
 
       <LoadFormModal
         isOpen={isModalOpen}

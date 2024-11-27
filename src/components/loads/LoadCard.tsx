@@ -154,10 +154,15 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
             <p className="font-medium">{load.brass.brand}</p>
           </div>
         )}
-        {config.cartridgeOverallLength && (
+        {(config.cartridgeOverallLength || config.cartridgeBaseToOgive) && (
           <div>
-            <p className="text-gray-500">COAL</p>
-            <p className="font-medium">{load.cartridgeOverallLength}"</p>
+            <p className="text-gray-500">Measurements</p>
+            {config.cartridgeOverallLength && (
+              <p className="font-medium">COAL: {load.cartridgeOverallLength}"</p>
+            )}
+            {config.cartridgeBaseToOgive && load.cartridgeBaseToOgive && (
+              <p className="font-medium mt-1">CBTO: {load.cartridgeBaseToOgive}"</p>
+            )}
           </div>
         )}
       </div>
