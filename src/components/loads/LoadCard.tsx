@@ -81,7 +81,8 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
       
       {(config.bullet.brand || config.bullet.weight) && (
         <div>
-          <p className="text-sm text-gray-500">
+          <h4 className="text-gray-500 font-medium mb-1">Bullet</h4>
+          <p className="text-sm">
             {config.bullet.brand && load.bullet.brand} {config.bullet.weight && `${load.bullet.weight}gr`}
           </p>
         </div>
@@ -132,7 +133,7 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
       <div className="grid grid-cols-2 gap-4 text-sm">
         {(config.powder.brand || config.powder.weight) && (
           <div>
-            <p className="text-gray-500">Powder</p>
+            <h4 className="text-gray-500 font-medium mb-1">Powder</h4>
             {config.powder.brand && <p className="font-medium">{load.powder.brand}</p>}
             {config.powder.weight && (
               <p className="text-sm mt-1">
@@ -144,19 +145,19 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
         )}
         {config.primer && (
           <div>
-            <p className="text-gray-500">Primer</p>
+            <h4 className="text-gray-500 font-medium mb-1">Primer</h4>
             <p className="font-medium">{load.primer}</p>
           </div>
         )}
         {config.brass.brand && (
           <div>
-            <p className="text-gray-500">Brass</p>
+            <h4 className="text-gray-500 font-medium mb-1">Brass</h4>
             <p className="font-medium">{load.brass.brand}</p>
           </div>
         )}
         {(config.cartridgeOverallLength || config.cartridgeBaseToOgive) && (
           <div>
-            <p className="text-gray-500">Measurements</p>
+            <h4 className="text-gray-500 font-medium mb-1">Measurements</h4>
             {config.cartridgeOverallLength && (
               <p className="font-medium">COAL: {load.cartridgeOverallLength}"</p>
             )}
@@ -169,7 +170,7 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
 
       {config.notes && load.notes && (
         <div className="pt-2 border-t">
-          <p className="text-gray-500 text-sm">Notes</p>
+          <h4 className="text-gray-500 font-medium mb-1">Notes</h4>
           <p className="text-sm whitespace-pre-wrap">{load.notes}</p>
         </div>
       )}

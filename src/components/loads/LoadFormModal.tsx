@@ -124,15 +124,8 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const processedData = {
-      cartridge: formData.cartridge,
-      bullet: formData.bullet,
-      powder: formData.powder,
-      primer: formData.primer,
-      brass: formData.brass,
-      cartridgeOverallLength: formData.cartridgeOverallLength,
-      cartridgeBaseToOgive: formData.cartridgeBaseToOgive || undefined,
-      notes: formData.notes,
-      favorite: formData.favorite
+      ...formData,
+      cartridgeBaseToOgive: formData.cartridgeBaseToOgive || undefined
     };
     onSubmit(processedData);
     onClose();
@@ -323,16 +316,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                       <input
                         type="number"
                         value={formData.cartridgeOverallLength}
-                        onChange={(e) =>
-                          setFormData(prev => ({
-                            ...prev,
-                            cartridgeOverallLength: e.target.value.includes('.') ? e.target.value : e.target.value + '.000'
-                          }))
-                        }
-                        step="0.001"
-                        min="0"
-                        inputMode="decimal"
-                        pattern="[0-9]*[.]?[0-9]*"
+                        onChange={(e) => setFormData({ ...formData, cartridgeOverallLength: e.target.value })}
                       />
                     </div>
                   )}
@@ -344,16 +328,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                       <input
                         type="number"
                         value={formData.cartridgeBaseToOgive}
-                        onChange={(e) =>
-                          setFormData(prev => ({
-                            ...prev,
-                            cartridgeBaseToOgive: e.target.value.includes('.') ? e.target.value : e.target.value + '.000'
-                          }))
-                        }
-                        step="0.001"
-                        min="0"
-                        inputMode="decimal"
-                        pattern="[0-9]*[.]?[0-9]*"
+                        onChange={(e) => setFormData({ ...formData, cartridgeBaseToOgive: e.target.value })}
                       />
                     </div>
                   )}
