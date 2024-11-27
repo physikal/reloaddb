@@ -1,9 +1,11 @@
 import React from 'react';
-import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign, ChevronDown, ChevronUp, Settings } from 'lucide-react';
 import { Load } from '../../types';
 import { Button } from '../ui/Button';
-import { useState } from 'react';
+import { useAuthStore } from '../../store/auth';
 import { formatCurrency } from '../../utils/format';
+import { useState } from 'react';
+import { LoadCardConfigModal } from './LoadCardConfigModal';
 
 interface LoadCardProps {
   load: Load;
@@ -15,6 +17,17 @@ interface LoadCardProps {
 
 export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite }: LoadCardProps) {
   const [showCostBreakdown, setShowCostBreakdown] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const config = load.displayConfig || {
+    bullet: { brand: true, weight: true },
+    powder: { brand: true, weight: true },
+    primer: true,
+    brass: { brand: true, length: true },
+    cartridgeOverallLength: true,
+    cartridgeBaseToOgive: true,
+    notes: true,
+    cost: true
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6 space-y-4">
@@ -55,16 +68,26 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
           >
             <TrashIcon className="w-4 h-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowConfigModal(true)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
         </div>
       </div>
       
-      <div>
-        <p className="text-sm text-gray-500">
-          {load.bullet.brand} {load.bullet.weight}gr
-        </p>
-      </div>
+      {(config.bullet.brand || config.bullet.weight) && (
+        <div>
+          <p className="text-sm text-gray-500">
+            {config.bullet.brand && load.bullet.brand} {config.bullet.weight && `${load.bullet.weight}gr`}
+          </p>
+        </div>
+      )}
 
-      {load.costPerRound !== undefined && (
+      {load.costPerRound !== undefined && config.cost && (
         <div className="mt-2 space-y-2">
           <button
             onClick={() => setShowCostBreakdown(!showCostBreakdown)}
@@ -107,45 +130,51 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
       )}
 
       <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <p className="text-gray-500">Powder</p>
-          <p className="font-medium">{load.powder.brand}</p>
-          <p className="text-sm mt-1">
-            <span className="text-gray-500">Charge: </span>
-            <span className="font-bold">{load.powder.weight}gr</span>
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-500">Primer</p>
-          <p className="font-medium">{load.primer}</p>
-        </div>
-        <div>
-          <p className="text-gray-500">Brass</p>
-          <p className="font-medium">{load.brass.brand}</p>
-        </div>
-        <div>
-          <p className="text-gray-500">Cartridge</p>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-bold">COAL: </span>
-              <span className="font-bold">{load.cartridgeOverallLength}"</span>
-            </p>
-            {load.cartridgeBaseToOgive && (
-              <p className="text-sm">
-                <span className="font-bold">CBTO: </span>
-                <span className="font-bold">{load.cartridgeBaseToOgive}"</span>
+        {(config.powder.brand || config.powder.weight) && (
+          <div>
+            <p className="text-gray-500">Powder</p>
+            {config.powder.brand && <p className="font-medium">{load.powder.brand}</p>}
+            {config.powder.weight && (
+              <p className="text-sm mt-1">
+                <span className="text-gray-500">Charge: </span>
+                <span className="font-bold">{load.powder.weight}gr</span>
               </p>
             )}
           </div>
-        </div>
+        )}
+        {config.primer && (
+          <div>
+            <p className="text-gray-500">Primer</p>
+            <p className="font-medium">{load.primer}</p>
+          </div>
+        )}
+        {config.brass.brand && (
+          <div>
+            <p className="text-gray-500">Brass</p>
+            <p className="font-medium">{load.brass.brand}</p>
+          </div>
+        )}
+        {config.cartridgeOverallLength && (
+          <div>
+            <p className="text-gray-500">COAL</p>
+            <p className="font-medium">{load.cartridgeOverallLength}"</p>
+          </div>
+        )}
       </div>
 
-      {load.notes && (
+      {config.notes && load.notes && (
         <div className="pt-2 border-t">
           <p className="text-gray-500 text-sm">Notes</p>
           <p className="text-sm whitespace-pre-wrap">{load.notes}</p>
         </div>
       )}
+
+      <LoadCardConfigModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        loadId={load.id}
+        config={config}
+      />
     </div>
   );
 }

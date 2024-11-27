@@ -5,9 +5,9 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Shield, Key, Smartphone } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
+import { LoadFormConfig } from '../components/profile/LoadFormConfig';
 import { useAuthStore } from '../store/auth';
 import { generateSecret, verifyToken, generateQRCodeUrl } from '../lib/2fa';
-import { LoadFormConfig } from '../components/profile/LoadFormConfig';
 
 export function ProfilePage() {
   const { user } = useAuthStore();

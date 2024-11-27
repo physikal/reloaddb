@@ -4,15 +4,8 @@ import { Button } from '../ui/Button';
 import { useLoadsStore } from '../../store/loads';
 import { useCartridgesStore } from '../../store/cartridges';
 import { useAuthStore } from '../../store/auth';
-import { CartridgeManager } from './CartridgeManager';
 import { Load, LoadFormConfig } from '../../types';
-
-interface LoadFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: Omit<Load, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  initialData?: Load;
-}
+import { CartridgeManager } from './CartridgeManager';
 
 const DEFAULT_CONFIG: LoadFormConfig = {
   bullet: {
@@ -34,12 +27,19 @@ const DEFAULT_CONFIG: LoadFormConfig = {
   cost: true,
 };
 
+interface LoadFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Omit<Load, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  initialData?: Load;
+}
+
 export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFormModalProps) {
   const { cartridges, fetchCartridges } = useCartridgesStore();
   const { user } = useAuthStore();
   const [showCartridgeManager, setShowCartridgeManager] = useState(false);
-  const userCartridges = cartridges.filter(c => c.userId === user?.id);
   const config = user?.loadFormConfig || DEFAULT_CONFIG;
+  const userCartridges = cartridges.filter(c => c.userId === user?.id);
 
   const [formData, setFormData] = useState({
     cartridge: '',
