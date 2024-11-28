@@ -60,28 +60,31 @@ export default function Dashboard() {
                     <div className="absolute left-0 top-14 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                       <div className="py-1">
                         <NavLink
-                          to="/calculator"
-                          className={({ isActive }) =>
-                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
-                          }
+                          to="calculator"
+                          className={({ isActive }) => `${
+                            isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center`}
+                          onClick={() => setShowToolsMenu(false)}
                         >
                           <Calculator className="w-4 h-4 inline-block mr-2" />
                           CPR Calculator
                         </NavLink>
                         <NavLink
-                          to="/inventory"
-                          className={({ isActive }) =>
-                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
-                          }
+                          to="inventory"
+                          className={({ isActive }) => `${
+                            isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center`}
+                          onClick={() => setShowToolsMenu(false)}
                         >
                           <Package className="w-4 h-4 inline-block mr-2" />
                           Inventory
                         </NavLink>
                         <NavLink
-                          to="/range-log"
-                          className={({ isActive }) =>
-                            `${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block px-4 py-2 text-sm hover:bg-gray-100`
-                          }
+                          to="range-log"
+                          className={({ isActive }) => `${
+                            isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center`}
+                          onClick={() => setShowToolsMenu(false)}
                         >
                           <Target className="w-4 h-4 inline-block mr-2" />
                           Range Log

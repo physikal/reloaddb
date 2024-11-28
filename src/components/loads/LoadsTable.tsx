@@ -67,8 +67,7 @@ export function LoadsTable({ loads, onEdit, onDelete, onDuplicate, onToggleFavor
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{load.powder.brand}</div>
                   <div className="text-sm">
-                    <span className="text-gray-500">Charge: </span>
-                    <span className="font-bold">{load.powder.weight}gr</span>
+                    <span>Charge: {load.powder.weight}gr</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -80,13 +79,11 @@ export function LoadsTable({ loads, onEdit, onDelete, onDuplicate, onToggleFavor
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="space-y-1">
                     <div className="text-sm">
-                      <span className="font-bold">COAL: </span>
-                      <span className="font-bold">{load.cartridgeOverallLength}"</span>
+                      <span>COAL: {load.cartridgeOverallLength}"</span>
                     </div>
                     {load.cartridgeBaseToOgive && (
                       <div className="text-sm">
-                        <span className="font-bold">CBTO: </span>
-                        <span className="font-bold">{load.cartridgeBaseToOgive}"</span>
+                        <span>CBTO: {load.cartridgeBaseToOgive}"</span>
                       </div>
                     )}
                   </div>

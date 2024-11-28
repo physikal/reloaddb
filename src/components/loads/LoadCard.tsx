@@ -79,15 +79,6 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
         </div>
       </div>
       
-      {(config.bullet.brand || config.bullet.weight) && (
-        <div>
-          <h4 className="text-gray-500 font-medium mb-1">Bullet</h4>
-          <p className="text-sm">
-            {config.bullet.brand && load.bullet.brand} {config.bullet.weight && `${load.bullet.weight}gr`}
-          </p>
-        </div>
-      )}
-
       {load.costPerRound !== undefined && config.cost && (
         <div className="mt-2 space-y-2">
           <button
@@ -111,67 +102,71 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
             <div className="bg-gray-50 rounded-md p-3 text-sm space-y-1">
               <div className="flex justify-between">
                 <span className="text-gray-600">Bullet:</span>
-                <span className="font-medium">{formatCurrency(load.costBreakdown.bulletCost)}</span>
+                <span>{formatCurrency(load.costBreakdown.bulletCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Powder:</span>
-                <span className="font-medium">{formatCurrency(load.costBreakdown.powderCost)}</span>
+                <span>{formatCurrency(load.costBreakdown.powderCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Primer:</span>
-                <span className="font-medium">{formatCurrency(load.costBreakdown.primerCost)}</span>
+                <span>{formatCurrency(load.costBreakdown.primerCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Brass:</span>
-                <span className="font-medium">{formatCurrency(load.costBreakdown.brassCost)}</span>
+                <span>{formatCurrency(load.costBreakdown.brassCost)}</span>
               </div>
             </div>
           )}
         </div>
       )}
 
+      {(config.bullet.brand || config.bullet.weight) && (
+        <div className="text-sm">
+          <h4 className="text-gray-900 font-bold mb-1">Bullet</h4>
+          <p>
+            {config.bullet.brand && load.bullet.brand} {config.bullet.weight && `${load.bullet.weight}gr`}
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 text-sm">
         {(config.powder.brand || config.powder.weight) && (
           <div>
-            <h4 className="text-gray-500 font-medium mb-1">Powder</h4>
-            {config.powder.brand && <p className="font-medium">{load.powder.brand}</p>}
-            {config.powder.weight && (
-              <p className="text-sm mt-1">
-                <span className="text-gray-500">Charge: </span>
-                <span className="font-bold">{load.powder.weight}gr</span>
-              </p>
-            )}
+            <h4 className="text-gray-900 font-bold mb-1">Powder</h4>
+            {config.powder.brand && <p>{load.powder.brand}</p>}
+            {config.powder.weight && <p className="mt-1">Charge: {load.powder.weight}gr</p>}
           </div>
         )}
         {config.primer && (
           <div>
-            <h4 className="text-gray-500 font-medium mb-1">Primer</h4>
-            <p className="font-medium">{load.primer}</p>
+            <h4 className="text-gray-900 font-bold mb-1">Primer</h4>
+            <p>{load.primer}</p>
           </div>
         )}
         {config.brass.brand && (
           <div>
-            <h4 className="text-gray-500 font-medium mb-1">Brass</h4>
-            <p className="font-medium">{load.brass.brand}</p>
+            <h4 className="text-gray-900 font-bold mb-1">Brass</h4>
+            <p>{load.brass.brand}</p>
           </div>
         )}
         {(config.cartridgeOverallLength || config.cartridgeBaseToOgive) && (
           <div>
-            <h4 className="text-gray-500 font-medium mb-1">Measurements</h4>
+            <h4 className="text-gray-900 font-bold mb-1">Measurements</h4>
             {config.cartridgeOverallLength && (
-              <p className="font-medium">COAL: {load.cartridgeOverallLength}"</p>
+              <p>COAL: {load.cartridgeOverallLength}"</p>
             )}
             {config.cartridgeBaseToOgive && load.cartridgeBaseToOgive && (
-              <p className="font-medium mt-1">CBTO: {load.cartridgeBaseToOgive}"</p>
+              <p className="mt-1">CBTO: {load.cartridgeBaseToOgive}"</p>
             )}
           </div>
         )}
       </div>
 
       {config.notes && load.notes && (
-        <div className="pt-2 border-t">
-          <h4 className="text-gray-500 font-medium mb-1">Notes</h4>
-          <p className="text-sm whitespace-pre-wrap">{load.notes}</p>
+        <div className="pt-2 border-t text-sm">
+          <h4 className="text-gray-900 font-bold mb-1">Notes</h4>
+          <p className="whitespace-pre-wrap">{load.notes}</p>
         </div>
       )}
 
