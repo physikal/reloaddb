@@ -11,12 +11,28 @@ import { InventoryPage } from './Inventory';
 import { RangeLogPage } from './RangeLog';
 import { useAuthStore } from '../store/auth';
 import { DonateButton } from '../components/ui/DonateButton';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [showToolsMenu, setShowToolsMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowToolsMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleNavigation = () => {
+    setShowToolsMenu(false);
+  };
 
   async function handleLogout() {
     try {
@@ -51,40 +67,43 @@ export default function Dashboard() {
                 <div className="relative group">
                   <button
                     className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium hover:border-gray-300 h-16"
-                    onClick={() => setShowToolsMenu(!showToolsMenu)}
-                    onBlur={() => setTimeout(() => setShowToolsMenu(false), 100)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowToolsMenu(!showToolsMenu);
+                    }}
+                    tabIndex={0}
                   >
                     Tools
                   </button>
                   {showToolsMenu && (
-                    <div className="absolute left-0 top-14 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                    <div ref={menuRef} className="absolute left-0 top-14 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                       <div className="py-1">
                         <NavLink
-                          to="calculator"
+                          to="/calculator"
+                          onClick={handleNavigation}
                           className={({ isActive }) => `${
                             isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center`}
-                          onClick={() => setShowToolsMenu(false)}
+                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center focus:outline-none`}
                         >
                           <Calculator className="w-4 h-4 inline-block mr-2" />
                           CPR Calculator
                         </NavLink>
                         <NavLink
-                          to="inventory"
+                          to="/inventory"
+                          onClick={handleNavigation}
                           className={({ isActive }) => `${
                             isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center`}
-                          onClick={() => setShowToolsMenu(false)}
+                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center focus:outline-none`}
                         >
                           <Package className="w-4 h-4 inline-block mr-2" />
                           Inventory
                         </NavLink>
                         <NavLink
-                          to="range-log"
+                          to="/range-log"
+                          onClick={handleNavigation}
                           className={({ isActive }) => `${
                             isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center`}
-                          onClick={() => setShowToolsMenu(false)}
+                          } block px-4 py-2 text-sm hover:bg-gray-100 flex items-center focus:outline-none`}
                         >
                           <Target className="w-4 h-4 inline-block mr-2" />
                           Range Log
