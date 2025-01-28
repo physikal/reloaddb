@@ -1,4 +1,5 @@
 import { read, utils } from 'xlsx';
+import { Load } from '../types';
 import { Ammunition, Bullet, Powder, Primer, Brass, Firearm } from '../types/inventory';
 
 interface ImportedInventory {
@@ -8,6 +9,57 @@ interface ImportedInventory {
   powder: Partial<Powder>[];
   primers: Partial<Primer>[];
   brass: Partial<Brass>[];
+}
+
+export async function importLoadsFromExcel(file: File): Promise<Omit<Load, 'id' | 'createdAt' | 'updatedAt' | 'userId'>[]> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = read(data, { type: 'binary' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = utils.sheet_to_json(worksheet);
+
+        const loads = jsonData.map(row => {
+          const load: Omit<Load, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
+            cartridge: row['Cartridge'],
+            bullet: {
+              brand: row['Bullet Brand'],
+              weight: Number(row['Bullet Weight (gr)'])
+            },
+            powder: {
+              brand: row['Powder Brand'],
+              weight: Number(row['Charge Weight (gr)'])
+            },
+            primer: row['Primer'],
+            brass: {
+              brand: row['Brass Brand'],
+              length: Number(row['Brass Length (in)'])
+            },
+            cartridgeOverallLength: Number(row['COAL (in)']),
+            cartridgeBaseToOgive: row['CBTO (in)'] ? Number(row['CBTO (in)']) : undefined,
+            notes: row['Notes'] || undefined,
+            favorite: row['Favorite'] === 'Yes',
+            costPerRound: row['Cost Per Round'] ? Number(row['Cost Per Round']) : undefined
+          };
+
+          return load;
+        });
+
+        resolve(loads);
+      } catch (error) {
+        reject(new Error('Failed to parse Excel file. Please make sure it matches the export format.'));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+
+    reader.readAsBinaryString(file);
+  });
 }
 
 export async function importInventoryFromExcel(file: File): Promise<ImportedInventory> {

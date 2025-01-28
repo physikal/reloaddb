@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, Star, Upload } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useLoadsStore } from '../store/loads';
 import { LoadCard } from '../components/loads/LoadCard';
@@ -8,7 +8,9 @@ import { Button } from '../components/ui/Button';
 import { Load } from '../types';
 import { LoadFormModal } from '../components/loads/LoadFormModal';
 import { ExportButton } from '../components/ui/ExportButton';
+import { ImportLoadsButton } from '../components/loads/ImportLoadsButton';
 import { exportLoadsToExcel } from '../utils/excelExport';
+import { importLoadsFromExcel } from '../utils/excelImport';
 import { ViewToggle } from '../components/ui/ViewToggle';
 
 export function LoadsListPage() {
@@ -20,6 +22,7 @@ export function LoadsListPage() {
   const [selectedCartridge, setSelectedCartridge] = useState<string>('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [importError, setImportError] = useState<string>('');
 
   useEffect(() => {
     if (user?.id) {
@@ -64,6 +67,20 @@ export function LoadsListPage() {
     exportLoadsToExcel(loads);
   };
 
+  const handleImport = async (file: File) => {
+    try {
+      setImportError('');
+      const importedLoads = await importLoadsFromExcel(file);
+      
+      // Import each load
+      for (const load of importedLoads) {
+        await handleCreateLoad(load);
+      }
+    } catch (error) {
+      setImportError(error.message);
+    }
+  };
+
   const filteredLoads = loads.filter(load => {
     const matchesSearch = searchTerm === '' || 
       load.cartridge.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,9 +102,9 @@ export function LoadsListPage() {
 
   return (
     <div className="space-y-6">
-      {error && (
+      {(error || importError) && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-          {error}
+          {error || importError}
         </div>
       )}
 
@@ -105,6 +122,7 @@ export function LoadsListPage() {
           <ViewToggle view={view} onViewChange={setView} />
         </div>
         <div className="flex space-x-4">
+          <ImportLoadsButton onImport={handleImport} />
           <ExportButton onExport={handleExport} />
           <Button onClick={() => setIsModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
