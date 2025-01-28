@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Package, Plus } from 'lucide-react';
+import { Package, Plus, Upload } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useInventoryStore } from '../store/inventory';
 import { Button } from '../components/ui/Button';
@@ -8,6 +8,7 @@ import { InventoryType } from '../types/inventory';
 import { InventoryTable } from '../components/inventory/InventoryTable';
 import { InventoryFormModal } from '../components/inventory/InventoryFormModal';
 import { exportInventoryToExcel } from '../utils/excelExport';
+import { importInventoryFromExcel } from '../utils/excelImport';
 import { clsx } from 'clsx';
 
 const INVENTORY_TYPES: { value: InventoryType; label: string }[] = [
@@ -21,10 +22,11 @@ const INVENTORY_TYPES: { value: InventoryType; label: string }[] = [
 
 export function InventoryPage() {
   const { user } = useAuthStore();
-  const { ammunition, bullets, powder, primers, brass, firearms, loading, error, fetchInventory } = useInventoryStore();
+  const { ammunition, bullets, powder, primers, brass, firearms, loading, error, fetchInventory, addItem } = useInventoryStore();
   const [activeType, setActiveType] = useState<InventoryType>('firearms');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [importError, setImportError] = useState<string>('');
 
   useEffect(() => {
     if (user?.id) {
@@ -34,6 +36,40 @@ export function InventoryPage() {
 
   const handleExport = () => {
     exportInventoryToExcel(ammunition, bullets, powder, primers, brass, firearms);
+  };
+
+  const handleImport = async (file: File) => {
+    if (!user?.id) return;
+
+    try {
+      setImportError('');
+      const importedInventory = await importInventoryFromExcel(file);
+
+      // Import each type of inventory item
+      for (const firearm of importedInventory.firearms) {
+        await addItem('firearms', { ...firearm, userId: user.id });
+      }
+      for (const ammo of importedInventory.ammunition) {
+        await addItem('ammunition', { ...ammo, userId: user.id });
+      }
+      for (const bullet of importedInventory.bullets) {
+        await addItem('bullets', { ...bullet, userId: user.id });
+      }
+      for (const pow of importedInventory.powder) {
+        await addItem('powder', { ...pow, userId: user.id });
+      }
+      for (const primer of importedInventory.primers) {
+        await addItem('primers', { ...primer, userId: user.id });
+      }
+      for (const brass of importedInventory.brass) {
+        await addItem('brass', { ...brass, userId: user.id });
+      }
+
+      // Refresh the current active type
+      await fetchInventory(user.id, activeType);
+    } catch (error) {
+      setImportError(error.message);
+    }
   };
 
   const inventoryData = {
@@ -53,6 +89,26 @@ export function InventoryPage() {
           <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
         </div>
         <div className="flex space-x-4">
+          <Button
+            variant="secondary"
+            onClick={() => document.getElementById('import-inventory')?.click()}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import from Excel
+          </Button>
+          <input
+            id="import-inventory"
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleImport(file);
+                e.target.value = ''; // Reset input
+              }
+            }}
+          />
           <ExportButton onExport={handleExport} />
           <Button onClick={() => setIsModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -61,9 +117,9 @@ export function InventoryPage() {
         </div>
       </div>
 
-      {error && (
+      {(error || importError) && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-          {error}
+          {error || importError}
         </div>
       )}
 

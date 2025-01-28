@@ -56,7 +56,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
                item.caliber?.toLowerCase().includes(searchStr) ||
                item.type?.toLowerCase().includes(searchStr);
       case 'ammunition':
-        return item.caliber?.toLowerCase().includes(searchStr) ||
+        return item.cartridge?.toLowerCase().includes(searchStr) ||
                item.sku?.toLowerCase().includes(searchStr) ||
                item.lotNumber?.toLowerCase().includes(searchStr);
       case 'bullets':
@@ -72,7 +72,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
                item.sku?.toLowerCase().includes(searchStr) ||
                item.type?.toLowerCase().includes(searchStr);
       case 'brass':
-        return item.caliber?.toLowerCase().includes(searchStr) ||
+        return item.cartridge?.toLowerCase().includes(searchStr) ||
                item.manufacturer?.toLowerCase().includes(searchStr);
       default:
         return false;
@@ -117,7 +117,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
       case 'ammunition':
         return (
           <tr>
-            <SortableHeader field="caliber" label="Caliber" />
+            <SortableHeader field="cartridge" label="Cartridge" />
             <SortableHeader field="sku" label="SKU" />
             <SortableHeader field="quantity" label="Quantity" />
             <SortableHeader field="lotNumber" label="Lot Number" />
@@ -163,7 +163,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
       case 'brass':
         return (
           <tr>
-            <SortableHeader field="caliber" label="Caliber" />
+            <SortableHeader field="cartridge" label="Cartridge" />
             <SortableHeader field="manufacturer" label="Manufacturer" />
             <SortableHeader field="quantity" label="Quantity" />
             <SortableHeader field="condition" label="Condition" />
@@ -196,7 +196,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
       case 'ammunition':
         return (
           <tr key={item.id}>
-            <td className={baseClasses}>{item.caliber}</td>
+            <td className={baseClasses}>{item.cartridge}</td>
             <td className={baseClasses}>{item.sku}</td>
             <td className={baseClasses}>{item.quantity}</td>
             <td className={baseClasses}>{item.lotNumber}</td>
@@ -242,7 +242,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
       case 'brass':
         return (
           <tr key={item.id}>
-            <td className={baseClasses}>{item.caliber}</td>
+            <td className={baseClasses}>{item.cartridge}</td>
             <td className={baseClasses}>{item.manufacturer}</td>
             <td className={baseClasses}>{item.quantity}</td>
             <td className={baseClasses}>{item.condition}</td>

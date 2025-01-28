@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { useAuthStore } from '../store/auth';
 
@@ -19,9 +19,16 @@ export function useAuthInit() {
             id: firebaseUser.uid,
             email: firebaseUser.email,
             role: 'user',
-            createdAt: new Date()
+            createdAt: new Date(),
+            lastLogin: new Date()
           };
           await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+        } else {
+          // Update last login time
+          await updateDoc(doc(db, 'users', firebaseUser.uid), {
+            lastLogin: new Date()
+          });
+          userData.lastLogin = new Date();
         }
         
         setUser({ ...firebaseUser, ...userData });

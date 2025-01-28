@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { Shield, UserCog, RefreshCw } from 'lucide-react';
+import { Shield, UserCog, RefreshCw, Clock } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
 import { User } from '../types';
@@ -27,6 +27,7 @@ export function AdminPanel() {
           ...data,
           id: doc.id,
           createdAt: data.createdAt?.toDate() || new Date(),
+          lastLogin: data.lastLogin?.toDate() || null,
         } as User;
       });
       setUsers(usersData);
@@ -62,6 +63,14 @@ export function AdminPanel() {
       setError('Failed to send password reset email');
       console.error(err);
     }
+  };
+
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return 'Never';
+    return new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(date);
   };
 
   if (loading) {
@@ -106,6 +115,12 @@ export function AdminPanel() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created At
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center space-x-1">
+                  <Clock className="w-4 h-4" />
+                  <span>Last Login</span>
+                </div>
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -127,7 +142,10 @@ export function AdminPanel() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : 'N/A'}
+                  {formatDate(user.createdAt)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatDate(user.lastLogin)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                   <Button

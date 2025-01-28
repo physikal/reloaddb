@@ -56,6 +56,7 @@ export interface User {
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
   createdAt: Date;
+  lastLogin?: Date;
   loadFormConfig?: LoadFormConfig;
   loadCardConfig?: LoadCardConfig;
 }

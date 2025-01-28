@@ -180,11 +180,11 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
         return (
           <>
             <div>
-              <label>Caliber</label>
+              <label>Cartridge</label>
               <input
                 type="text"
-                value={formData.caliber || ''}
-                onChange={(e) => handleInputChange('caliber', e.target.value)}
+                value={formData.cartridge || ''}
+                onChange={(e) => handleInputChange('cartridge', e.target.value)}
                 required
               />
             </div>
@@ -374,11 +374,11 @@ export function InventoryFormModal({ isOpen, onClose, type, initialData }: Inven
         return (
           <>
             <div>
-              <label>Caliber</label>
+              <label>Cartridge</label>
               <input
                 type="text"
-                value={formData.caliber || ''}
-                onChange={(e) => handleInputChange('caliber', e.target.value)}
+                value={formData.cartridge || ''}
+                onChange={(e) => handleInputChange('cartridge', e.target.value)}
                 required
               />
             </div>

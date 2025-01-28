@@ -7,7 +7,7 @@ export interface BaseInventoryItem {
 }
 
 export interface Ammunition extends BaseInventoryItem {
-  caliber: string;
+  cartridge: string;
   sku: string;
   quantity: number;
   lotNumber: string;
@@ -39,7 +39,7 @@ export interface Primer extends BaseInventoryItem {
 }
 
 export interface Brass extends BaseInventoryItem {
-  caliber: string;
+  cartridge: string; // Changed from caliber to cartridge
   manufacturer: string;
   quantity: number;
   condition: 'new' | 'once-fired' | 'reloaded';

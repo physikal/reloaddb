@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, Upload } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useLoadsStore } from '../store/loads';
 import { LoadCard } from '../components/loads/LoadCard';

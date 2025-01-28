@@ -61,7 +61,7 @@ export function exportInventoryToExcel(
   // Ammunition worksheet
   const ammoWorksheet = utils.json_to_sheet(
     ammunition.map(item => ({
-      'Caliber': item.caliber,
+      'Cartridge': item.cartridge,
       'SKU': item.sku,
       'Quantity': item.quantity,
       'Lot Number': item.lotNumber || '',
@@ -119,7 +119,7 @@ export function exportInventoryToExcel(
   // Brass worksheet
   const brassWorksheet = utils.json_to_sheet(
     brass.map(item => ({
-      'Caliber': item.caliber,
+      'Cartridge': item.cartridge,
       'Manufacturer': item.manufacturer,
       'Quantity': item.quantity,
       'Condition': item.condition,
