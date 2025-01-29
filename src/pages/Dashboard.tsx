@@ -11,12 +11,20 @@ import { InventoryPage } from './Inventory';
 import { RangeLogPage } from './RangeLog';
 import { useAuthStore } from '../store/auth';
 import { DonateButton } from '../components/ui/DonateButton';
+import { MigrationBanner } from '../components/ui/MigrationBanner';
 import { useState, useRef, useEffect } from 'react';
+import { exportLoadsToExcel } from '../utils/excelExport';
+import { exportInventoryToExcel } from '../utils/excelExport';
+import { useLoadsStore } from '../store/loads';
+import { useInventoryStore } from '../store/inventory';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { loads } = useLoadsStore();
+  const { ammunition, bullets, powder, primers, brass, firearms } = useInventoryStore();
   const [showToolsMenu, setShowToolsMenu] = useState(false);
+  const [showMigrationBanner, setShowMigrationBanner] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +42,12 @@ export default function Dashboard() {
     setShowToolsMenu(false);
   };
 
+  const handleExportData = () => {
+    // Export both loads and inventory data
+    exportLoadsToExcel(loads);
+    exportInventoryToExcel(ammunition, bullets, powder, primers, brass, firearms);
+  };
+
   async function handleLogout() {
     try {
       await signOut(auth);
@@ -45,6 +59,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showMigrationBanner && (
+        <MigrationBanner
+          onDismiss={() => setShowMigrationBanner(false)}
+          onExport={handleExportData}
+        />
+      )}
+      
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -128,7 +149,7 @@ export default function Dashboard() {
                     `${isActive ? 'border-primary-500' : 'border-transparent'} text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`
                   }
                 >
-                  <UserCircle className="w-4 h-4 mr-2" />
+                  <UserCircle className="w-4 h-4 mr-1" />
                   Profile
                 </NavLink>
               </div>
