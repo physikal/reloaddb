@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
 import { SignInPage } from './pages/SignIn';
 import { RegisterPage } from './pages/Register';
+import { RegisterSuccessPage } from './pages/RegisterSuccess';
 import Dashboard from './pages/Dashboard';
 import { useAuthInit } from './lib/auth';
 
@@ -26,6 +27,10 @@ function App() {
       <Route 
         path="/register"
         element={user ? <Navigate to="/" /> : <RegisterPage />}
+      />
+      <Route 
+        path="/register/success"
+        element={user ? <Navigate to="/" /> : <RegisterSuccessPage />}
       />
       <Route 
         path="/*"
