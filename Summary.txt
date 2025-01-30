@@ -1,0 +1,170 @@
+# ReloadDB Codebase Summary
+
+## Overview
+ReloadDB is a comprehensive web application for managing reloading data, inventory, and range sessions. Built with React, TypeScript, and Supabase, it provides a robust platform for tracking ammunition reloading activities.
+
+## Tech Stack
+- Frontend: React + TypeScript
+- Styling: Tailwind CSS
+- State Management: Zustand
+- Database: Supabase (PostgreSQL)
+- Authentication: Supabase Auth
+- Icons: Lucide React
+
+## Core Features
+1. Load Data Management
+   - Create, edit, and track reloading data
+   - Support for multiple cartridge types
+   - Cost per round calculation
+   - Favorite loads
+   - Customizable load card display
+
+2. Inventory Management
+   - Track multiple inventory types:
+     - Ammunition
+     - Bullets
+     - Powder
+     - Primers
+     - Brass
+     - Firearms
+   - Lot number tracking
+   - Usage history
+   - Excel import/export
+
+3. Range Log
+   - Track range sessions
+   - Record shots and muzzle velocity
+   - Ammunition usage tracking
+   - Statistical analysis (SD, ES)
+
+4. User Management
+   - Email/password authentication
+   - Two-factor authentication
+   - Profile settings
+   - Admin panel
+
+## Database Schema
+
+### Core Tables
+1. users
+   - Authentication and user data
+   - Role-based access control
+   - Configuration preferences
+
+2. loads
+   - Reloading data
+   - Component measurements
+   - Cost tracking
+   - Display preferences
+
+3. inventory_* (ammunition, bullets, powder, primers, brass, firearms)
+   - Quantity tracking
+   - Lot numbers
+   - Usage history
+
+4. range_days
+   - Session tracking
+   - Shot data
+   - Ammunition usage
+
+### Views
+- range_day_stats: Statistical analysis of range sessions
+
+### Functions
+- calculate_avg_muzzle_velocity: Calculates average MV from shots
+- update_ammunition_quantity: Manages ammunition inventory
+- get_ammunition_history: Retrieves usage history
+
+## Security
+- Row Level Security (RLS) enabled on all tables
+- Per-user data isolation
+- Role-based access control
+- Secure password handling
+- Optional 2FA
+
+## State Management
+Uses Zustand stores for:
+- Authentication (useAuthStore)
+- Loads (useLoadsStore)
+- Inventory (useInventoryStore)
+- Range data (useRangeStore)
+- Cartridges (useCartridgesStore)
+- Changelog (useChangelogStore)
+
+## Key Components
+
+### Authentication
+- SignInForm
+- RegisterForm
+- PasswordResetModal
+- AuthGuard
+
+### Load Management
+- LoadCard
+- LoadFormModal
+- LoadDetailsModal
+- CprCalculator
+
+### Inventory
+- InventoryTable
+- InventoryFormModal
+- AmmunitionHistoryModal
+
+### Range Log
+- RangeDayCard
+- RangeDayFormModal
+- ShotLog
+- ShotForm
+
+## File Structure
+```
+src/
+├── components/
+│   ├── auth/       # Authentication components
+│   ├── inventory/  # Inventory management
+│   ├── loads/      # Load data components
+│   ├── range/      # Range log components
+│   └── ui/         # Shared UI components
+├── lib/
+│   ├── auth.ts     # Authentication utilities
+│   ├── supabase.ts # Database client
+│   └── 2fa.ts      # 2FA implementation
+├── pages/          # Route components
+├── store/          # Zustand stores
+├── types/          # TypeScript definitions
+└── utils/          # Utility functions
+```
+
+## Development Guidelines
+
+1. Data Persistence
+   - All data changes must go through Supabase
+   - Use RLS policies for security
+   - Maintain data integrity with triggers
+
+2. UI/UX
+   - Consistent styling with Tailwind
+   - Responsive design
+   - Loading states for async operations
+   - Error handling and user feedback
+
+3. Type Safety
+   - Strict TypeScript usage
+   - Comprehensive type definitions
+   - Type checking for all data operations
+
+4. Performance
+   - Efficient state management
+   - Optimized database queries
+   - Proper indexing
+
+5. Security
+   - Authentication required for all operations
+   - Data isolation between users
+   - Input validation
+   - Secure password handling
+
+## Deployment
+- Static site hosting
+- Environment variables for configuration
+- Database migrations for schema changes

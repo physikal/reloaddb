@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
 import { Button } from '../ui/Button';
+import { signUp } from '../../lib/auth';
 
 export function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -25,20 +23,12 @@ export function RegisterForm() {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        id: userCredential.user.uid,
-        email: userCredential.user.email,
-        role: 'user',
-        createdAt: new Date()
-      });
+      await signUp(email, password);
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
+      if (err.message.includes('already exists')) {
         setError('An account with this email already exists');
       } else {
-        setError('Failed to create account');
+        setError(err.message || 'Failed to create account');
         console.error(err);
       }
     }

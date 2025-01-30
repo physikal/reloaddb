@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
 import { QRCodeSVG } from 'qrcode.react';
 import { Shield, Key, Smartphone } from 'lucide-react';
-import { auth, db } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
 import { LoadFormConfig } from '../components/profile/LoadFormConfig';
 import { useAuthStore } from '../store/auth';
 import { generateSecret, verifyToken, generateQRCodeUrl } from '../lib/2fa';
+import { updateUserPassword, resetPassword } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 
 export function ProfilePage() {
   const { user } = useAuthStore();
@@ -16,7 +15,7 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [is2FAEnabled, setIs2FAEnabled] = useState(user?.twoFactorEnabled || false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(user?.user_metadata?.two_factor_enabled || false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [secret2FA, setSecret2FA] = useState('');
@@ -32,19 +31,25 @@ export function ProfilePage() {
     }
 
     try {
-      const credential = EmailAuthProvider.credential(
-        user?.email || '',
-        currentPassword
-      );
-      await reauthenticateWithCredential(auth.currentUser!, credential);
-      await updatePassword(auth.currentUser!, newPassword);
+      // First verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: currentPassword
+      });
+
+      if (signInError) {
+        throw new Error('Current password is incorrect');
+      }
+
+      // Update password
+      await updateUserPassword(newPassword);
       
       setSuccess('Password updated successfully');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
-      setError('Failed to update password. Please check your current password.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to update password');
     }
   };
 
@@ -55,14 +60,19 @@ export function ProfilePage() {
       setShowQRCode(true);
     } else {
       try {
-        await updateDoc(doc(db, 'users', user!.id), {
-          twoFactorEnabled: false,
-          twoFactorSecret: null
+        const { error } = await supabase.auth.updateUser({
+          data: {
+            two_factor_enabled: false,
+            two_factor_secret: null
+          }
         });
+
+        if (error) throw error;
+
         setIs2FAEnabled(false);
         setSuccess('2FA has been disabled');
-      } catch (err) {
-        setError('Failed to disable 2FA');
+      } catch (err: any) {
+        setError(err.message || 'Failed to disable 2FA');
       }
     }
   };
@@ -77,18 +87,23 @@ export function ProfilePage() {
       const isValid = verifyToken(verificationCode, secret2FA);
       
       if (isValid) {
-        await updateDoc(doc(db, 'users', user!.id), {
-          twoFactorEnabled: true,
-          twoFactorSecret: secret2FA
+        const { error } = await supabase.auth.updateUser({
+          data: {
+            two_factor_enabled: true,
+            two_factor_secret: secret2FA
+          }
         });
+
+        if (error) throw error;
+
         setIs2FAEnabled(true);
         setShowQRCode(false);
         setSuccess('2FA has been enabled successfully');
       } else {
         setError('Invalid verification code');
       }
-    } catch (err) {
-      setError('Failed to enable 2FA');
+    } catch (err: any) {
+      setError(err.message || 'Failed to enable 2FA');
     }
   };
 

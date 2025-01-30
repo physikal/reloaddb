@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { RangeDay } from '../types/range';
 
 interface RangeState {
@@ -8,49 +7,9 @@ interface RangeState {
   loading: boolean;
   error: string | null;
   fetchRangeDays: (userId: string) => Promise<void>;
-  addRangeDay: (rangeDay: Omit<RangeDay, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  addRangeDay: (rangeDay: Omit<RangeDay, 'id' | 'createdAt' | 'updatedAt' | 'stats'>) => Promise<void>;
   updateRangeDay: (id: string, data: Partial<RangeDay>) => Promise<void>;
   deleteRangeDay: (id: string) => Promise<void>;
-}
-
-// Helper function to prepare data for Firestore
-function prepareDataForFirestore(data: any) {
-  const prepared = { ...data };
-  
-  // Convert Date objects to Firestore timestamps
-  if (prepared.date instanceof Date) {
-    prepared.date = Timestamp.fromDate(prepared.date);
-  }
-  if (prepared.createdAt instanceof Date) {
-    prepared.createdAt = Timestamp.fromDate(prepared.createdAt);
-  }
-  if (prepared.updatedAt instanceof Date) {
-    prepared.updatedAt = Timestamp.fromDate(prepared.updatedAt);
-  }
-
-  // Remove undefined values
-  Object.keys(prepared).forEach(key => {
-    if (prepared[key] === undefined) {
-      delete prepared[key];
-    }
-  });
-
-  // Clean up firearms array
-  if (prepared.firearms) {
-    prepared.firearms = prepared.firearms.map((f: any) => ({
-      firearmId: f.firearmId,
-      notes: f.notes || '',
-      firearm: {
-        id: f.firearm.id,
-        manufacturer: f.firearm.manufacturer,
-        model: f.firearm.model,
-        caliber: f.firearm.caliber || null,
-        type: f.firearm.type || null
-      }
-    }));
-  }
-
-  return prepared;
 }
 
 export const useRangeStore = create<RangeState>((set) => ({
@@ -61,87 +20,169 @@ export const useRangeStore = create<RangeState>((set) => ({
   fetchRangeDays: async (userId: string) => {
     set({ loading: true, error: null });
     try {
-      const q = query(
-        collection(db, 'rangeDays'),
-        where('userId', '==', userId)
-      );
-      
-      const snapshot = await getDocs(q);
-      const rangeDays = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
-      })) as RangeDay[];
+      // Fetch from range_days table to get all data including shots
+      const { data: rangeDays, error } = await supabase
+        .from('range_days')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
 
-      set({ 
-        rangeDays: rangeDays.sort((a, b) => b.date.getTime() - a.date.getTime()),
-        loading: false 
-      });
-    } catch (error) {
+      if (error) throw error;
+
+      // Fetch stats for each range day
+      const { data: stats, error: statsError } = await supabase
+        .from('range_day_stats')
+        .select('id, avg_muzzle_velocity, total_shots')
+        .in('id', rangeDays.map(day => day.id));
+
+      if (statsError) throw statsError;
+
+      const processedRangeDays = rangeDays.map(day => {
+        const dayStats = stats.find(s => s.id === day.id);
+        return {
+          id: day.id,
+          userId: day.user_id,
+          title: day.title,
+          date: new Date(day.date),
+          firearms: day.firearms || [],
+          ammunition: day.ammunition || [],
+          shots: day.shots || [],
+          notes: day.notes,
+          stats: dayStats ? {
+            avgMuzzleVelocity: dayStats.avg_muzzle_velocity,
+            totalShots: dayStats.total_shots
+          } : {
+            avgMuzzleVelocity: null,
+            totalShots: 0
+          },
+          createdAt: new Date(day.created_at),
+          updatedAt: new Date(day.updated_at)
+        };
+      }) as RangeDay[];
+
+      set({ rangeDays: processedRangeDays, loading: false });
+    } catch (error: any) {
       console.error('Error fetching range days:', error);
-      set({ error: 'Failed to fetch range days', loading: false });
+      set({ error: error.message, loading: false });
     }
   },
 
   addRangeDay: async (rangeDayData) => {
     try {
-      const preparedData = prepareDataForFirestore({
-        ...rangeDayData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+      const { data, error } = await supabase
+        .from('range_days')
+        .insert({
+          user_id: rangeDayData.userId,
+          title: rangeDayData.title,
+          date: rangeDayData.date.toISOString(),
+          firearms: rangeDayData.firearms,
+          ammunition: rangeDayData.ammunition,
+          shots: rangeDayData.shots || [],
+          notes: rangeDayData.notes
+        })
+        .select('*')
+        .single();
 
-      const docRef = await addDoc(collection(db, 'rangeDays'), preparedData);
+      if (error) throw error;
+
+      // Fetch the stats for the new range day
+      const { data: stats, error: statsError } = await supabase
+        .from('range_day_stats')
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (statsError) throw statsError;
 
       const newRangeDay = {
-        id: docRef.id,
-        ...rangeDayData,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        id: data.id,
+        userId: data.user_id,
+        title: data.title,
+        date: new Date(data.date),
+        firearms: data.firearms,
+        ammunition: data.ammunition,
+        shots: data.shots || [],
+        notes: data.notes,
+        stats: {
+          avgMuzzleVelocity: stats.avg_muzzle_velocity,
+          totalShots: stats.total_shots
+        },
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at)
       } as RangeDay;
 
       set(state => ({
         rangeDays: [newRangeDay, ...state.rangeDays]
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding range day:', error);
-      set({ error: 'Failed to add range day' });
+      set({ error: error.message });
       throw error;
     }
   },
 
   updateRangeDay: async (id, data) => {
     try {
-      const preparedData = prepareDataForFirestore({
-        ...data,
-        updatedAt: new Date()
-      });
+      const updateData = {
+        ...(data.title && { title: data.title }),
+        ...(data.date && { date: data.date.toISOString() }),
+        ...(data.firearms && { firearms: data.firearms }),
+        ...(data.ammunition && { ammunition: data.ammunition }),
+        ...(data.shots && { shots: data.shots }),
+        ...(data.notes !== undefined && { notes: data.notes })
+      };
 
-      await updateDoc(doc(db, 'rangeDays', id), preparedData);
+      const { error } = await supabase
+        .from('range_days')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Fetch updated stats
+      const { data: stats, error: statsError } = await supabase
+        .from('range_day_stats')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (statsError) throw statsError;
 
       set(state => ({
         rangeDays: state.rangeDays.map(day =>
-          day.id === id ? { ...day, ...data, updatedAt: new Date() } : day
+          day.id === id ? {
+            ...day,
+            ...data,
+            stats: {
+              avgMuzzleVelocity: stats.avg_muzzle_velocity,
+              totalShots: stats.total_shots
+            },
+            updatedAt: new Date()
+          } : day
         )
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating range day:', error);
-      set({ error: 'Failed to update range day' });
+      set({ error: error.message });
       throw error;
     }
   },
 
   deleteRangeDay: async (id) => {
     try {
-      await deleteDoc(doc(db, 'rangeDays', id));
+      const { error } = await supabase
+        .from('range_days')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       set(state => ({
         rangeDays: state.rangeDays.filter(day => day.id !== id)
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting range day:', error);
-      set({ error: 'Failed to delete range day' });
+      set({ error: error.message });
       throw error;
     }
   }

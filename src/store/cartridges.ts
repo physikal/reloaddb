@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { collection, query, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 interface Cartridge {
   id: string;
@@ -14,55 +13,86 @@ interface CartridgesState {
   loading: boolean;
   error: string | null;
   fetchCartridges: (userId: string) => Promise<void>;
-  addCartridge: (name: string) => Promise<void>;
+  addCartridge: (name: string, userId: string) => Promise<void>;
   deleteCartridge: (id: string) => Promise<void>;
 }
 
-export const useCartridgesStore = create<CartridgesState>((set, get) => ({
+export const useCartridgesStore = create<CartridgesState>((set) => ({
   cartridges: [],
   loading: false,
   error: null,
+
   fetchCartridges: async (userId: string) => {
     set({ loading: true, error: null });
     try {
-      if (!userId) throw new Error('User ID is required');
-      const q = query(collection(db, 'cartridges'));
-      const snapshot = await getDocs(q);
-      const cartridges = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
-      } as Cartridge));
-      set({ cartridges: cartridges.sort((a, b) => a.name.localeCompare(b.name)), loading: false });
-    } catch (error) {
-      set({ error: 'Failed to fetch cartridges', loading: false });
+      const { data, error } = await supabase
+        .from('cartridges')
+        .select('*')
+        .eq('user_id', userId)
+        .order('name');
+
+      if (error) throw error;
+
+      const cartridges = data.map(cartridge => ({
+        id: cartridge.id,
+        name: cartridge.name,
+        userId: cartridge.user_id,
+        createdAt: new Date(cartridge.created_at)
+      }));
+
+      set({ cartridges, loading: false });
+    } catch (error: any) {
+      console.error('Error fetching cartridges:', error);
+      set({ error: error.message, loading: false });
     }
   },
+
   addCartridge: async (name: string, userId: string) => {
     try {
-      if (!userId) throw new Error('User ID is required');
-      
-      const docRef = await addDoc(collection(db, 'cartridges'), {
-        name,
-        createdAt: new Date(),
-        userId
-      });
-      const newCartridge = { id: docRef.id, name, userId, createdAt: new Date() };
-      set(state => ({ 
+      const { data, error } = await supabase
+        .from('cartridges')
+        .insert({
+          name,
+          user_id: userId
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newCartridge = {
+        id: data.id,
+        name: data.name,
+        userId: data.user_id,
+        createdAt: new Date(data.created_at)
+      };
+
+      set(state => ({
         cartridges: [...state.cartridges, newCartridge].sort((a, b) => a.name.localeCompare(b.name))
       }));
-    } catch (error) {
-      set({ error: 'Failed to add cartridge' });
+    } catch (error: any) {
+      console.error('Error adding cartridge:', error);
+      set({ error: error.message });
+      throw error;
     }
   },
+
   deleteCartridge: async (id: string) => {
     try {
-      await deleteDoc(doc(db, 'cartridges', id));
+      const { error } = await supabase
+        .from('cartridges')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       set(state => ({
-        cartridges: state.cartridges.filter(cartridge => cartridge.id !== id),
+        cartridges: state.cartridges.filter(cartridge => cartridge.id !== id)
       }));
-    } catch (error) {
-      set({ error: 'Failed to delete cartridge' });
+    } catch (error: any) {
+      console.error('Error deleting cartridge:', error);
+      set({ error: error.message });
+      throw error;
     }
-  },
+  }
 }));

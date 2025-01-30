@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { Ammunition, Bullet, Powder, Primer, Brass, Firearm, InventoryType } from '../types/inventory';
 
 type InventoryItem = Ammunition | Bullet | Powder | Primer | Brass | Firearm;
@@ -20,46 +19,59 @@ interface InventoryState {
   deleteItem: (type: InventoryType, id: string) => Promise<void>;
 }
 
-// Helper function to convert Firestore timestamp to Date
-function convertTimestamps(data: any) {
-  const converted = { ...data };
+// Helper function to convert snake_case to camelCase
+function snakeToCamel(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj;
   
-  if (converted.createdAt instanceof Timestamp) {
-    converted.createdAt = converted.createdAt.toDate();
+  if (Array.isArray(obj)) {
+    return obj.map(snakeToCamel);
   }
-  if (converted.updatedAt instanceof Timestamp) {
-    converted.updatedAt = converted.updatedAt.toDate();
-  }
-  if (converted.purchaseDate instanceof Timestamp) {
-    converted.purchaseDate = converted.purchaseDate.toDate();
-  }
-  
-  return converted;
+
+  return Object.keys(obj).reduce((acc, key) => {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    acc[camelKey] = snakeToCamel(obj[key]);
+    return acc;
+  }, {} as any);
 }
 
-// Helper function to prepare data for Firestore
-function prepareDataForFirestore(data: any) {
-  const prepared = { ...data };
+// Helper function to convert camelCase to snake_case
+function camelToSnake(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj;
   
-  // Convert Date objects to Firestore timestamps
-  if (prepared.purchaseDate instanceof Date) {
-    prepared.purchaseDate = Timestamp.fromDate(prepared.purchaseDate);
-  }
-  if (prepared.createdAt instanceof Date) {
-    prepared.createdAt = Timestamp.fromDate(prepared.createdAt);
-  }
-  if (prepared.updatedAt instanceof Date) {
-    prepared.updatedAt = Timestamp.fromDate(prepared.updatedAt);
+  if (Array.isArray(obj)) {
+    return obj.map(camelToSnake);
   }
 
-  // Remove undefined values
-  Object.keys(prepared).forEach(key => {
-    if (prepared[key] === undefined) {
-      delete prepared[key];
+  return Object.keys(obj).reduce((acc, key) => {
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    acc[snakeKey] = camelToSnake(obj[key]);
+    return acc;
+  }, {} as any);
+}
+
+// Helper function to prepare data for Supabase
+function prepareDataForUpdate(data: any): any {
+  // Convert the data to snake_case first
+  const snakeData = camelToSnake(data);
+
+  // Remove any empty objects or undefined values
+  const cleanData = Object.entries(snakeData).reduce((acc, [key, value]) => {
+    // Skip empty objects and undefined values
+    if (value === undefined || (typeof value === 'object' && value !== null && Object.keys(value).length === 0)) {
+      return acc;
     }
-  });
+    
+    // Handle Date objects
+    if (value instanceof Date) {
+      acc[key] = value.toISOString();
+    } else {
+      acc[key] = value;
+    }
+    
+    return acc;
+  }, {} as any);
 
-  return prepared;
+  return cleanData;
 }
 
 export const useInventoryStore = create<InventoryState>((set) => ({
@@ -75,70 +87,79 @@ export const useInventoryStore = create<InventoryState>((set) => ({
   fetchInventory: async (userId: string, type: InventoryType) => {
     set({ loading: true, error: null });
     try {
-      console.log(`[DEBUG] Fetching ${type} for user:`, userId);
-      const q = query(
-        collection(db, type),
-        where('userId', '==', userId)
-      );
-      
-      const snapshot = await getDocs(q);
-      console.log(`[DEBUG] Found ${snapshot.docs.length} ${type} documents`);
-      
-      const items = snapshot.docs.map(doc => {
-        const data = convertTimestamps(doc.data());
-        return {
-          id: doc.id,
-          ...data
-        };
-      });
+      const { data, error } = await supabase
+        .from(type)
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const items = data.map(item => ({
+        ...snakeToCamel(item),
+        id: item.id,
+        userId: item.user_id,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+        ...(item.purchase_date && { purchaseDate: new Date(item.purchase_date) })
+      }));
 
       set(state => ({
         ...state,
         [type]: items,
         loading: false
       }));
-    } catch (error) {
-      console.error(`[DEBUG] Error fetching ${type}:`, error);
-      set({ error: `Failed to fetch ${type}`, loading: false });
+    } catch (error: any) {
+      console.error(`Error fetching ${type}:`, error);
+      set({ error: error.message, loading: false });
     }
   },
 
   addItem: async (type: InventoryType, itemData) => {
     try {
-      const preparedData = prepareDataForFirestore({
-        ...itemData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+      const data = {
+        user_id: itemData.userId,
+        ...prepareDataForUpdate(itemData)
+      };
 
-      const docRef = await addDoc(collection(db, type), preparedData);
+      const { data: newItem, error } = await supabase
+        .from(type)
+        .insert(data)
+        .select()
+        .single();
 
-      const newItem = {
-        id: docRef.id,
-        ...itemData,
-        createdAt: new Date(),
-        updatedAt: new Date()
+      if (error) throw error;
+
+      const processedItem = {
+        ...snakeToCamel(newItem),
+        id: newItem.id,
+        userId: newItem.user_id,
+        createdAt: new Date(newItem.created_at),
+        updatedAt: new Date(newItem.updated_at),
+        ...(newItem.purchase_date && { purchaseDate: new Date(newItem.purchase_date) })
       };
 
       set(state => ({
         ...state,
-        [type]: [newItem, ...state[type]]
+        [type]: [processedItem, ...state[type]]
       }));
-    } catch (error) {
-      console.error(`[DEBUG] Error adding ${type}:`, error);
-      set({ error: `Failed to add ${type}` });
+    } catch (error: any) {
+      console.error(`Error adding ${type}:`, error);
+      set({ error: error.message });
       throw error;
     }
   },
 
   updateItem: async (type: InventoryType, id: string, data) => {
     try {
-      const preparedData = prepareDataForFirestore({
-        ...data,
-        updatedAt: new Date()
-      });
+      const updateData = prepareDataForUpdate(data);
 
-      await updateDoc(doc(db, type, id), preparedData);
+      const { error } = await supabase
+        .from(type)
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
 
       set(state => ({
         ...state,
@@ -146,24 +167,29 @@ export const useInventoryStore = create<InventoryState>((set) => ({
           item.id === id ? { ...item, ...data, updatedAt: new Date() } : item
         )
       }));
-    } catch (error) {
-      console.error(`[DEBUG] Error updating ${type}:`, error);
-      set({ error: `Failed to update ${type}` });
+    } catch (error: any) {
+      console.error(`Error updating ${type}:`, error);
+      set({ error: error.message });
       throw error;
     }
   },
 
   deleteItem: async (type: InventoryType, id: string) => {
     try {
-      await deleteDoc(doc(db, type, id));
-      
+      const { error } = await supabase
+        .from(type)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       set(state => ({
         ...state,
         [type]: state[type].filter(item => item.id !== id)
       }));
-    } catch (error) {
-      console.error(`[DEBUG] Error deleting ${type}:`, error);
-      set({ error: `Failed to delete ${type}` });
+    } catch (error: any) {
+      console.error(`Error deleting ${type}:`, error);
+      set({ error: error.message });
       throw error;
     }
   }

@@ -3,6 +3,9 @@ import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Load } from '../../types';
 import { formatCurrency } from '../../utils/format';
+import { useInventoryStore } from '../../store/inventory';
+import { useEffect } from 'react';
+import { useAuthStore } from '../../store/auth';
 
 interface LoadDetailsModalProps {
   isOpen: boolean;
@@ -11,11 +14,27 @@ interface LoadDetailsModalProps {
 }
 
 export function LoadDetailsModal({ isOpen, onClose, load }: LoadDetailsModalProps) {
+  const { ammunition, fetchInventory } = useInventoryStore();
+  const { user } = useAuthStore();
+
+  // Fetch ammunition data when modal opens
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      fetchInventory(user.id, 'ammunition');
+    }
+  }, [isOpen, user?.id, fetchInventory]);
+
   if (!isOpen) return null;
+
+  // Find matching ammunition in inventory
+  const matchingAmmo = ammunition.find(
+    ammo => ammo.cartridge === load.cartridge && 
+           ammo.sku === `${load.bullet.brand} ${load.bullet.weight}gr`
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold text-gray-900">{load.cartridge}</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -23,7 +42,7 @@ export function LoadDetailsModal({ isOpen, onClose, load }: LoadDetailsModalProp
           </Button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Bullet Details */}
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-2">Bullet</h3>
@@ -34,7 +53,7 @@ export function LoadDetailsModal({ isOpen, onClose, load }: LoadDetailsModalProp
               </div>
               <div>
                 <p className="text-sm text-gray-500">Weight</p>
-                <p className="font-medium">{load.bullet.weight}gr</p>
+                <p className="font-medium">{load.bullet.weightRaw || load.bullet.weight}gr</p>
               </div>
             </div>
           </div>
@@ -49,7 +68,7 @@ export function LoadDetailsModal({ isOpen, onClose, load }: LoadDetailsModalProp
               </div>
               <div>
                 <p className="text-sm text-gray-500">Charge Weight</p>
-                <p className="font-medium">{load.powder.weight}gr</p>
+                <p className="font-medium">{load.powder.weightRaw || load.powder.weight}gr</p>
               </div>
             </div>
           </div>
@@ -72,7 +91,7 @@ export function LoadDetailsModal({ isOpen, onClose, load }: LoadDetailsModalProp
               </div>
               <div>
                 <p className="text-sm text-gray-500">Length</p>
-                <p className="font-medium">{load.brass.length}"</p>
+                <p className="font-medium">{load.brass.lengthRaw || load.brass.length}"</p>
               </div>
             </div>
           </div>
@@ -83,19 +102,38 @@ export function LoadDetailsModal({ isOpen, onClose, load }: LoadDetailsModalProp
             <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">COAL</p>
-                <p className="font-medium">{load.cartridgeOverallLength}"</p>
+                <p className="font-medium">{load.cartridgeOverallLengthRaw || load.cartridgeOverallLength}"</p>
               </div>
               {load.cartridgeBaseToOgive && (
                 <div>
                   <p className="text-sm text-gray-500">CBTO</p>
-                  <p className="font-medium">{load.cartridgeBaseToOgive}"</p>
+                  <p className="font-medium">{load.cartridgeBaseToOgiveRaw || load.cartridgeBaseToOgive}"</p>
                 </div>
               )}
             </div>
           </div>
 
+          {/* Inventory Status */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Inventory Status</h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-500">Available Rounds</p>
+                <p className="font-medium">
+                  {matchingAmmo ? (
+                    <span className={matchingAmmo.quantity > 0 ? 'text-green-600' : 'text-red-600'}>
+                      {matchingAmmo.quantity} rounds
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">Not in inventory</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Cost Information */}
-          {load.costPerRound !== undefined && (
+          {typeof load.costPerRound === 'number' && (
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Cost Information</h3>
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">

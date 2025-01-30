@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs, updateDoc, doc } from 'firebase/firestore';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { Shield, UserCog, RefreshCw, Clock } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
+import { supabase } from '../lib/supabase';
 import { User } from '../types';
 
 export function AdminPanel() {
@@ -18,21 +16,24 @@ export function AdminPanel() {
 
   const fetchUsers = async () => {
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef);
-      const querySnapshot = await getDocs(q);
-      const usersData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          ...data,
-          id: doc.id,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          lastLogin: data.lastLogin?.toDate() || null,
-        } as User;
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const usersData = data.map(user => ({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        createdAt: new Date(user.created_at),
+        lastLogin: user.last_login ? new Date(user.last_login) : null
+      })) as User[];
+
       setUsers(usersData);
-    } catch (err) {
-      setError('Failed to fetch users');
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch users');
       console.error(err);
     } finally {
       setLoading(false);
@@ -42,25 +43,30 @@ export function AdminPanel() {
   const handleToggleAdmin = async (user: User) => {
     try {
       const newRole = user.role === 'admin' ? 'user' : 'admin';
-      await updateDoc(doc(db, 'users', user.id), {
-        role: newRole
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({ role: newRole })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
       setUsers(users.map(u => 
         u.id === user.id ? { ...u, role: newRole } : u
       ));
       setSuccessMessage(`Successfully ${newRole === 'admin' ? 'promoted' : 'demoted'} user`);
-    } catch (err) {
-      setError('Failed to update user role');
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user role');
       console.error(err);
     }
   };
 
   const handleResetPassword = async (email: string) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
       setSuccessMessage('Password reset email sent');
-    } catch (err) {
-      setError('Failed to send password reset email');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send password reset email');
       console.error(err);
     }
   };

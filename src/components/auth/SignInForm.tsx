@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../lib/firebase';
 import { Button } from '../ui/Button';
 import { PasswordResetModal } from './PasswordResetModal';
+import { signIn, resetPassword } from '../../lib/auth';
 
 export function SignInForm() {
   const [email, setEmail] = useState('');
@@ -17,19 +16,19 @@ export function SignInForm() {
     setSuccessMessage('');
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      setError('Invalid email or password');
+      await signIn(email, password);
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password');
     }
   };
 
   const handlePasswordReset = async (email: string) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await resetPassword(email);
       setSuccessMessage('Password reset email sent. Please check your inbox.');
       setIsResetModalOpen(false);
-    } catch (err) {
-      setError('Failed to send password reset email. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send password reset email');
     }
   };
 

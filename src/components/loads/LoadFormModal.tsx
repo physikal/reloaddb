@@ -4,28 +4,8 @@ import { Button } from '../ui/Button';
 import { useLoadsStore } from '../../store/loads';
 import { useCartridgesStore } from '../../store/cartridges';
 import { useAuthStore } from '../../store/auth';
-import { Load, LoadFormConfig } from '../../types';
+import { Load } from '../../types';
 import { CartridgeManager } from './CartridgeManager';
-
-const DEFAULT_CONFIG: LoadFormConfig = {
-  bullet: {
-    brand: true,
-    weight: true,
-  },
-  powder: {
-    brand: true,
-    weight: true,
-  },
-  primer: true,
-  brass: {
-    brand: true,
-    length: true,
-  },
-  cartridgeOverallLength: true,
-  cartridgeBaseToOgive: true,
-  notes: true,
-  cost: true,
-};
 
 interface LoadFormModalProps {
   isOpen: boolean;
@@ -38,26 +18,42 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
   const { cartridges, fetchCartridges } = useCartridgesStore();
   const { user } = useAuthStore();
   const [showCartridgeManager, setShowCartridgeManager] = useState(false);
-  const config = user?.loadFormConfig || DEFAULT_CONFIG;
   const userCartridges = cartridges.filter(c => c.userId === user?.id);
+
+  // Get form configuration from user metadata with fallback defaults
+  const formConfig = user?.user_metadata?.load_form_config || {
+    bullet: { brand: true, weight: true },
+    powder: { brand: true, weight: true },
+    primer: true,
+    brass: { brand: true, length: true },
+    cartridgeOverallLength: true,
+    cartridgeBaseToOgive: true,
+    notes: true,
+    cost: true
+  };
 
   const [formData, setFormData] = useState({
     cartridge: '',
     bullet: {
       brand: '',
       weight: '',
+      weightRaw: ''
     },
     powder: {
       brand: '',
       weight: '',
+      weightRaw: ''
     },
     primer: '',
     brass: {
       brand: '',
       length: '',
+      lengthRaw: ''
     },
     cartridgeOverallLength: '',
+    cartridgeOverallLengthRaw: '',
     cartridgeBaseToOgive: '',
+    cartridgeBaseToOgiveRaw: '',
     notes: '',
     favorite: false
   });
@@ -74,19 +70,24 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
         cartridge: initialData.cartridge || '',
         bullet: {
           brand: initialData.bullet.brand || '',
-          weight: initialData.bullet.weight?.toString() || '',
+          weight: initialData.bullet.weightRaw || initialData.bullet.weight?.toString() || '',
+          weightRaw: initialData.bullet.weightRaw || initialData.bullet.weight?.toString() || ''
         },
         powder: {
           brand: initialData.powder.brand || '',
-          weight: initialData.powder.weight?.toString() || '',
+          weight: initialData.powder.weightRaw || initialData.powder.weight?.toString() || '',
+          weightRaw: initialData.powder.weightRaw || initialData.powder.weight?.toString() || ''
         },
         primer: initialData.primer || '',
         brass: {
           brand: initialData.brass.brand || '',
-          length: initialData.brass.length?.toString() || '',
+          length: initialData.brass.lengthRaw || initialData.brass.length?.toString() || '',
+          lengthRaw: initialData.brass.lengthRaw || initialData.brass.length?.toString() || ''
         },
-        cartridgeOverallLength: initialData.cartridgeOverallLength?.toString() || '',
-        cartridgeBaseToOgive: initialData.cartridgeBaseToOgive?.toString() || '',
+        cartridgeOverallLength: initialData.cartridgeOverallLengthRaw || initialData.cartridgeOverallLength?.toString() || '',
+        cartridgeOverallLengthRaw: initialData.cartridgeOverallLengthRaw || initialData.cartridgeOverallLength?.toString() || '',
+        cartridgeBaseToOgive: initialData.cartridgeBaseToOgiveRaw || initialData.cartridgeBaseToOgive?.toString() || '',
+        cartridgeBaseToOgiveRaw: initialData.cartridgeBaseToOgiveRaw || initialData.cartridgeBaseToOgive?.toString() || '',
         notes: initialData.notes || '',
         favorite: initialData.favorite || false
       });
@@ -96,18 +97,23 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
         bullet: {
           brand: '',
           weight: '',
+          weightRaw: ''
         },
         powder: {
           brand: '',
           weight: '',
+          weightRaw: ''
         },
         primer: '',
         brass: {
           brand: '',
           length: '',
+          lengthRaw: ''
         },
         cartridgeOverallLength: '',
+        cartridgeOverallLengthRaw: '',
         cartridgeBaseToOgive: '',
+        cartridgeBaseToOgiveRaw: '',
         notes: '',
         favorite: false
       });
@@ -123,12 +129,56 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Convert string values to numbers while preserving raw values
     const processedData = {
       ...formData,
-      cartridgeBaseToOgive: formData.cartridgeBaseToOgive || undefined
+      bullet: {
+        brand: formData.bullet.brand,
+        weight: Number(formData.bullet.weight),
+        weightRaw: formData.bullet.weightRaw || formData.bullet.weight
+      },
+      powder: {
+        brand: formData.powder.brand,
+        weight: Number(formData.powder.weight),
+        weightRaw: formData.powder.weightRaw || formData.powder.weight
+      },
+      brass: {
+        brand: formData.brass.brand,
+        length: Number(formData.brass.length),
+        lengthRaw: formData.brass.lengthRaw || formData.brass.length
+      },
+      cartridgeOverallLength: Number(formData.cartridgeOverallLength),
+      cartridgeOverallLengthRaw: formData.cartridgeOverallLengthRaw || formData.cartridgeOverallLength,
+      cartridgeBaseToOgive: formData.cartridgeBaseToOgive ? Number(formData.cartridgeBaseToOgive) : undefined,
+      cartridgeBaseToOgiveRaw: formData.cartridgeBaseToOgive ? (formData.cartridgeBaseToOgiveRaw || formData.cartridgeBaseToOgive) : undefined
     };
+
     onSubmit(processedData);
     onClose();
+  };
+
+  const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, field: string, subfield?: string) => {
+    const value = e.target.value;
+    // Allow empty string or valid decimal numbers
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      if (subfield) {
+        setFormData(prev => ({
+          ...prev,
+          [field]: {
+            ...prev[field],
+            [subfield]: value,
+            [`${subfield}Raw`]: value // Store raw value
+          }
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [field]: value,
+          [`${field}Raw`]: value // Store raw value
+        }));
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -153,6 +203,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                 value={formData.cartridge}
                 onChange={(e) => setFormData({ ...formData, cartridge: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                required
               >
                 <option value="">Select cartridge</option>
                 {userCartridges.map((cartridge) => (
@@ -173,11 +224,11 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
               </div>
             </div>
 
-            {(config.bullet.brand || config.bullet.weight) && (
+            {(formConfig.bullet.brand || formConfig.bullet.weight) && (
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Bullet Details</h3>
                 <div className="space-y-3">
-                  {config.bullet.brand && (
+                  {formConfig.bullet.brand && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Bullet</label>
                       <input
@@ -189,23 +240,18 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                             bullet: { ...formData.bullet, brand: e.target.value },
                           })
                         }
+                        required
                       />
                     </div>
                   )}
-                  {config.bullet.weight && (
+                  {formConfig.bullet.weight && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Weight (gr)</label>
                       <input
-                        type="number"
+                        type="text"
                         value={formData.bullet.weight}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            bullet: { ...formData.bullet, weight: e.target.value },
-                          })
-                        }
-                        step="0.1"
-                        min="0"
+                        onChange={(e) => handleNumericInput(e, 'bullet', 'weight')}
+                        required
                       />
                     </div>
                   )}
@@ -213,11 +259,11 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
               </div>
             )}
 
-            {(config.powder.brand || config.powder.weight) && (
+            {(formConfig.powder.brand || formConfig.powder.weight) && (
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Powder Details</h3>
                 <div className="space-y-3">
-                  {config.powder.brand && (
+                  {formConfig.powder.brand && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Brand</label>
                       <input
@@ -229,23 +275,18 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                             powder: { ...formData.powder, brand: e.target.value },
                           })
                         }
+                        required
                       />
                     </div>
                   )}
-                  {config.powder.weight && (
+                  {formConfig.powder.weight && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Charge Weight (gr)</label>
                       <input
-                        type="number"
+                        type="text"
                         value={formData.powder.weight}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            powder: { ...formData.powder, weight: e.target.value },
-                          })
-                        }
-                        step="0.1"
-                        min="0"
+                        onChange={(e) => handleNumericInput(e, 'powder', 'weight')}
+                        required
                       />
                     </div>
                   )}
@@ -253,22 +294,23 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
               </div>
             )}
 
-            {config.primer && (
+            {formConfig.primer && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">Primer</label>
                 <input
                   type="text"
                   value={formData.primer}
                   onChange={(e) => setFormData({ ...formData, primer: e.target.value })}
+                  required
                 />
               </div>
             )}
 
-            {(config.brass.brand || config.brass.length) && (
+            {(formConfig.brass.brand || formConfig.brass.length) && (
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Brass Details</h3>
                 <div className="space-y-3">
-                  {config.brass.brand && (
+                  {formConfig.brass.brand && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Brand</label>
                       <input
@@ -280,23 +322,18 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
                             brass: { ...formData.brass, brand: e.target.value },
                           })
                         }
+                        required
                       />
                     </div>
                   )}
-                  {config.brass.length && (
+                  {formConfig.brass.length && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Length (in)</label>
                       <input
-                        type="number"
+                        type="text"
                         value={formData.brass.length}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            brass: { ...formData.brass, length: e.target.value },
-                          })
-                        }
-                        step="0.001"
-                        min="0"
+                        onChange={(e) => handleNumericInput(e, 'brass', 'length')}
+                        required
                       />
                     </div>
                   )}
@@ -304,31 +341,32 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
               </div>
             )}
 
-            {(config.cartridgeOverallLength || config.cartridgeBaseToOgive) && (
+            {(formConfig.cartridgeOverallLength || formConfig.cartridgeBaseToOgive) && (
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Cartridge Measurements</h3>
                 <div className="space-y-3">
-                  {config.cartridgeOverallLength && (
+                  {formConfig.cartridgeOverallLength && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Cartridge Overall Length (COAL) (in)
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         value={formData.cartridgeOverallLength}
-                        onChange={(e) => setFormData({ ...formData, cartridgeOverallLength: e.target.value })}
+                        onChange={(e) => handleNumericInput(e, 'cartridgeOverallLength')}
+                        required
                       />
                     </div>
                   )}
-                  {config.cartridgeBaseToOgive && (
+                  {formConfig.cartridgeBaseToOgive && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Cartridge Base to Ogive (CBTO) (in)
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         value={formData.cartridgeBaseToOgive}
-                        onChange={(e) => setFormData({ ...formData, cartridgeBaseToOgive: e.target.value })}
+                        onChange={(e) => handleNumericInput(e, 'cartridgeBaseToOgive')}
                       />
                     </div>
                   )}
@@ -336,7 +374,7 @@ export function LoadFormModal({ isOpen, onClose, onSubmit, initialData }: LoadFo
               </div>
             )}
 
-            {config.notes && (
+            {formConfig.notes && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">Notes</label>
                 <textarea

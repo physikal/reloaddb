@@ -1,10 +1,12 @@
 import React from 'react';
-import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign, ChevronDown, ChevronUp, Settings, Eye } from 'lucide-react';
+import { PencilIcon, TrashIcon, CopyIcon, Star, DollarSign, ChevronDown, ChevronUp, Settings, Eye, Package } from 'lucide-react';
 import { Load } from '../../types';
 import { Button } from '../ui/Button';
 import { useState } from 'react';
 import { LoadCardConfigModal } from './LoadCardConfigModal';
 import { LoadDetailsModal } from './LoadDetailsModal';
+import { AddToInventoryModal } from './AddToInventoryModal';
+import { formatCurrency } from '../../utils/format';
 
 interface LoadCardProps {
   load: Load;
@@ -18,6 +20,8 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
   const [showCostBreakdown, setShowCostBreakdown] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showAddToInventoryModal, setShowAddToInventoryModal] = useState(false);
+
   const config = load.displayConfig || {
     bullet: { brand: true, weight: true },
     powder: { brand: true, weight: true },
@@ -42,6 +46,14 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
           <Star className="w-5 h-5" fill={load.favorite ? 'currentColor' : 'none'} />
         </Button>
         <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAddToInventoryModal(true)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <Package className="w-4 h-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -92,13 +104,13 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
           <p className="text-sm text-gray-600 mt-1">
             {config.bullet.brand && load.bullet.brand}
             {config.bullet.brand && config.bullet.weight && ' '}
-            {config.bullet.weight && `${load.bullet.weight}gr`}
+            {config.bullet.weight && `${load.bullet.weightRaw || load.bullet.weight}gr`}
           </p>
         )}
       </div>
       
       <div className="p-4 space-y-4">
-        {config.cost && load.costPerRound !== undefined && (
+        {config.cost && typeof load.costPerRound === 'number' && (
           <div className="space-y-2">
             <button
               onClick={() => setShowCostBreakdown(!showCostBreakdown)}
@@ -107,7 +119,7 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
               <div className="flex items-center">
                 <DollarSign className="w-4 h-4 text-primary-600 mr-2" />
                 <span className="font-medium text-primary-900">
-                  {load.costPerRound.toFixed(4)} per round
+                  {formatCurrency(load.costPerRound)} per round
                 </span>
               </div>
               {showCostBreakdown ? (
@@ -121,19 +133,19 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
               <div className="bg-gray-50 rounded-md p-3 text-sm space-y-1">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Bullet:</span>
-                  <span className="font-medium">{load.costBreakdown.bulletCost.toFixed(4)}</span>
+                  <span className="font-medium">{formatCurrency(load.costBreakdown.bulletCost)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Powder:</span>
-                  <span className="font-medium">{load.costBreakdown.powderCost.toFixed(4)}</span>
+                  <span className="font-medium">{formatCurrency(load.costBreakdown.powderCost)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Primer:</span>
-                  <span className="font-medium">{load.costBreakdown.primerCost.toFixed(4)}</span>
+                  <span className="font-medium">{formatCurrency(load.costBreakdown.primerCost)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Brass:</span>
-                  <span className="font-medium">{load.costBreakdown.brassCost.toFixed(4)}</span>
+                  <span className="font-medium">{formatCurrency(load.costBreakdown.brassCost)}</span>
                 </div>
               </div>
             )}
@@ -147,7 +159,7 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
               <p className="font-medium">
                 {config.powder.brand && load.powder.brand}
                 {config.powder.brand && config.powder.weight && ' '}
-                {config.powder.weight && `${load.powder.weight}gr`}
+                {config.powder.weight && `${load.powder.weightRaw || load.powder.weight}gr`}
               </p>
             </div>
           )}
@@ -169,14 +181,14 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
           {config.cartridgeOverallLength && (
             <div>
               <p className="text-gray-500">COAL</p>
-              <p className="font-medium">{load.cartridgeOverallLength}"</p>
+              <p className="font-medium">{load.cartridgeOverallLengthRaw || load.cartridgeOverallLength}"</p>
             </div>
           )}
 
           {config.cartridgeBaseToOgive && load.cartridgeBaseToOgive && (
             <div>
               <p className="text-gray-500">CBTO</p>
-              <p className="font-medium">{load.cartridgeBaseToOgive}"</p>
+              <p className="font-medium">{load.cartridgeBaseToOgiveRaw || load.cartridgeBaseToOgive}"</p>
             </div>
           )}
         </div>
@@ -199,6 +211,12 @@ export function LoadCard({ load, onEdit, onDelete, onDuplicate, onToggleFavorite
       <LoadDetailsModal
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
+        load={load}
+      />
+
+      <AddToInventoryModal
+        isOpen={showAddToInventoryModal}
+        onClose={() => setShowAddToInventoryModal(false)}
         load={load}
       />
     </div>

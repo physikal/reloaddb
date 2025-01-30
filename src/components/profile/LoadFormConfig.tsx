@@ -1,10 +1,9 @@
 import React from 'react';
 import { Settings } from 'lucide-react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { Button } from '../ui/Button';
 import { useAuthStore } from '../../store/auth';
 import { LoadFormConfig as LoadFormConfigType } from '../../types';
-import { Button } from '../ui/Button';
+import { supabase } from '../../lib/supabase';
 
 const DEFAULT_CONFIG: LoadFormConfigType = {
   bullet: {
@@ -27,16 +26,21 @@ const DEFAULT_CONFIG: LoadFormConfigType = {
 };
 
 export function LoadFormConfig() {
-  const { user, updateUserConfig } = useAuthStore();
+  const { user } = useAuthStore();
   const [config, setConfig] = React.useState<LoadFormConfigType>(
-    user?.loadFormConfig || DEFAULT_CONFIG
+    user?.user_metadata?.load_form_config || DEFAULT_CONFIG
   );
   const [success, setSuccess] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
 
+  // Update local state when user metadata changes
   React.useEffect(() => {
-    setConfig(user?.loadFormConfig || DEFAULT_CONFIG);
-  }, [user?.loadFormConfig]);
+    const userConfig = user?.user_metadata?.load_form_config;
+    if (userConfig) {
+      setConfig(userConfig);
+    }
+  }, [user?.user_metadata?.load_form_config]);
 
   const handleToggle = (path: string, value: boolean) => {
     const newConfig = { ...config };
@@ -57,16 +61,32 @@ export function LoadFormConfig() {
 
   const handleSave = async () => {
     try {
-      await updateDoc(doc(db, 'users', user!.id), {
-        loadFormConfig: config
+      setSaving(true);
+      setError('');
+      setSuccess(false);
+
+      // Get current metadata
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('No user logged in');
+
+      const currentMetadata = currentUser.user_metadata || {};
+
+      // Update user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          ...currentMetadata,
+          load_form_config: config
+        }
       });
-      // Update local state
-      updateUserConfig(config);
+
+      if (error) throw error;
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      setError('Failed to save configuration');
-      setTimeout(() => setError(''), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save configuration');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -205,8 +225,8 @@ export function LoadFormConfig() {
         </div>
 
         <div className="mt-6">
-          <Button onClick={handleSave}>
-            Save Configuration
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving...' : 'Save Configuration'}
           </Button>
         </div>
       </div>

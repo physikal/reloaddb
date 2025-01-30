@@ -1,7 +1,5 @@
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { LogOut, Database, UserCircle, Package, Calculator, Target } from 'lucide-react';
+import { LogOut, Database, UserCircle, Package, Calculator, Target, FileText } from 'lucide-react';
 import { LoadsListPage } from './LoadsList';
 import { Button } from '../components/ui/Button';
 import { AdminPanel } from './AdminPanel';
@@ -9,22 +7,16 @@ import { CprCalculatorPage } from './CprCalculator';
 import { ProfilePage } from './Profile';
 import { InventoryPage } from './Inventory';
 import { RangeLogPage } from './RangeLog';
+import { ChangelogPage } from './Changelog';
 import { useAuthStore } from '../store/auth';
 import { DonateButton } from '../components/ui/DonateButton';
-import { MigrationBanner } from '../components/ui/MigrationBanner';
 import { useState, useRef, useEffect } from 'react';
-import { exportLoadsToExcel } from '../utils/excelExport';
-import { exportInventoryToExcel } from '../utils/excelExport';
-import { useLoadsStore } from '../store/loads';
-import { useInventoryStore } from '../store/inventory';
+import { signOut } from '../lib/auth';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { loads } = useLoadsStore();
-  const { ammunition, bullets, powder, primers, brass, firearms } = useInventoryStore();
   const [showToolsMenu, setShowToolsMenu] = useState(false);
-  const [showMigrationBanner, setShowMigrationBanner] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,15 +34,9 @@ export default function Dashboard() {
     setShowToolsMenu(false);
   };
 
-  const handleExportData = () => {
-    // Export both loads and inventory data
-    exportLoadsToExcel(loads);
-    exportInventoryToExcel(ammunition, bullets, powder, primers, brass, firearms);
-  };
-
   async function handleLogout() {
     try {
-      await signOut(auth);
+      await signOut();
       navigate('/signin');
     } catch (error) {
       console.error('Failed to log out:', error);
@@ -59,13 +45,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {showMigrationBanner && (
-        <MigrationBanner
-          onDismiss={() => setShowMigrationBanner(false)}
-          onExport={handleExportData}
-        />
-      )}
-      
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -133,7 +112,16 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                {user?.role === 'admin' && (
+                <NavLink
+                  to="/changelog"
+                  className={({ isActive }) =>
+                    `${isActive ? 'border-primary-500' : 'border-transparent'} text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`
+                  }
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  Changelog
+                </NavLink>
+                {user?.email === 'boody@physikal.com' && (
                   <NavLink
                     to="/admin"
                     className={({ isActive }) =>
@@ -174,7 +162,8 @@ export default function Dashboard() {
           <Route path="/calculator" element={<CprCalculatorPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/range-log" element={<RangeLogPage />} />
-          {user?.role === 'admin' && (
+          <Route path="/changelog" element={<ChangelogPage />} />
+          {user?.email === 'boody@physikal.com' && (
             <Route path="/admin" element={<AdminPanel />} />
           )}
           <Route path="/profile" element={<ProfilePage />} />

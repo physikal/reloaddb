@@ -5,18 +5,23 @@ export interface Load {
   bullet: {
     brand: string;
     weight: number;
+    weightRaw?: string;
   };
   powder: {
     brand: string;
     weight: number;
+    weightRaw?: string;
   };
   primer: string;
   brass: {
     brand: string;
     length: number;
+    lengthRaw?: string;
   };
   cartridgeOverallLength: number;
+  cartridgeOverallLengthRaw?: string;
   cartridgeBaseToOgive?: number;
+  cartridgeBaseToOgiveRaw?: string;
   notes?: string;
   favorite?: boolean;
   displayConfig?: {
@@ -82,3 +87,12 @@ export interface LoadFormConfig {
 }
 
 export interface LoadCardConfig extends LoadFormConfig {}
+
+export interface ChangelogEntry {
+  id: string;
+  title: string;
+  content: string;
+  version: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

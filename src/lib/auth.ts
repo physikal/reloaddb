@@ -1,47 +1,65 @@
 import { useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { supabase } from './supabase';
 import { useAuthStore } from '../store/auth';
 
 export function useAuthInit() {
   const { setUser, setLoading } = useAuthStore();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        let userData = userDoc.data();
-        
-        if (!userData) {
-          // Create new user document if it doesn't exist
-          userData = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email,
-            role: 'user',
-            createdAt: new Date(),
-            lastLogin: new Date()
-          };
-          await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-        } else {
-          // Update last login time
-          await updateDoc(doc(db, 'users', firebaseUser.uid), {
-            lastLogin: new Date()
-          });
-          userData.lastLogin = new Date();
-        }
-        
-        setUser({ ...firebaseUser, ...userData });
-      } else {
-        setUser(null);
-      }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
-    }, (error) => {
-      console.error('Auth state change error:', error);
-      setLoading(false);
-      setUser(null);
     });
-    
-    return () => unsubscribe();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, [setUser, setLoading]);
+}
+
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function signUp(email: string, password: string) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        role: 'user'
+      }
+    }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function resetPassword(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (error) throw error;
+}
+
+export async function updateUserPassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
 }

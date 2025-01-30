@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit2, Trash2, ChevronUp, ChevronDown, History } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useInventoryStore } from '../../store/inventory';
 import { InventoryType } from '../../types/inventory';
 import { InventoryFormModal } from './InventoryFormModal';
+import { AmmunitionHistoryModal } from './AmmunitionHistoryModal';
+import { supabase } from '../../lib/supabase';
 
 interface InventoryTableProps {
   type: InventoryType;
@@ -20,12 +22,40 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
   const { deleteItem } = useInventoryStore();
   const [editItem, setEditItem] = useState<any | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: '', direction: 'asc' });
+  const [selectedAmmo, setSelectedAmmo] = useState<any | null>(null);
+  const [ammoHistory, setAmmoHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSort = (key: string) => {
     setSortConfig(current => ({
       key,
       direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
     }));
+  };
+
+  const handleShowHistory = async (item: any) => {
+    try {
+      const { data, error } = await supabase.rpc('get_ammunition_history', {
+        ammo_id: item.id
+      });
+
+      if (error) throw error;
+
+      setAmmoHistory(data.map((entry: any) => ({
+        id: entry.id,
+        rangeDay: {
+          id: entry.range_day_id,
+          title: entry.range_day_title,
+          date: new Date(entry.range_day_date)
+        },
+        roundsUsed: entry.rounds_used,
+        createdAt: new Date(entry.created_at)
+      })));
+      setSelectedAmmo(item);
+      setShowHistory(true);
+    } catch (error) {
+      console.error('Error fetching ammunition history:', error);
+    }
   };
 
   const getSortedData = (data: any[]) => {
@@ -47,59 +77,25 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
     });
   };
 
-  const filteredData = data.filter(item => {
-    const searchStr = searchTerm.toLowerCase();
-    switch (type) {
-      case 'firearms':
-        return item.manufacturer?.toLowerCase().includes(searchStr) ||
-               item.model?.toLowerCase().includes(searchStr) ||
-               item.caliber?.toLowerCase().includes(searchStr) ||
-               item.type?.toLowerCase().includes(searchStr);
-      case 'ammunition':
-        return item.cartridge?.toLowerCase().includes(searchStr) ||
-               item.sku?.toLowerCase().includes(searchStr) ||
-               item.lotNumber?.toLowerCase().includes(searchStr);
-      case 'bullets':
-        return item.manufacturer?.toLowerCase().includes(searchStr) ||
-               item.sku?.toLowerCase().includes(searchStr) ||
-               item.type?.toLowerCase().includes(searchStr);
-      case 'powder':
-        return item.manufacturer?.toLowerCase().includes(searchStr) ||
-               item.sku?.toLowerCase().includes(searchStr) ||
-               item.lotNumber?.toLowerCase().includes(searchStr);
-      case 'primers':
-        return item.manufacturer?.toLowerCase().includes(searchStr) ||
-               item.sku?.toLowerCase().includes(searchStr) ||
-               item.type?.toLowerCase().includes(searchStr);
-      case 'brass':
-        return item.cartridge?.toLowerCase().includes(searchStr) ||
-               item.manufacturer?.toLowerCase().includes(searchStr);
-      default:
-        return false;
-    }
-  });
-
-  const sortedData = getSortedData(filteredData);
-
-  const SortableHeader = ({ field, label }: { field: string; label: string }) => {
-    const isActive = sortConfig.key === field;
-    return (
-      <th
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-        onClick={() => handleSort(field)}
-      >
-        <div className="flex items-center space-x-1">
-          <span>{label}</span>
-          <div className="flex flex-col">
-            <ChevronUp className={`w-3 h-3 ${isActive && sortConfig.direction === 'asc' ? 'text-primary-600' : 'text-gray-400'}`} />
-            <ChevronDown className={`w-3 h-3 -mt-1 ${isActive && sortConfig.direction === 'desc' ? 'text-primary-600' : 'text-gray-400'}`} />
-          </div>
-        </div>
-      </th>
-    );
-  };
-
   const renderTableHeaders = () => {
+    const SortableHeader = ({ field, label }: { field: string; label: string }) => {
+      const isActive = sortConfig.key === field;
+      return (
+        <th
+          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+          onClick={() => handleSort(field)}
+        >
+          <div className="flex items-center space-x-1">
+            <span>{label}</span>
+            <div className="flex flex-col">
+              <ChevronUp className={`w-3 h-3 ${isActive && sortConfig.direction === 'asc' ? 'text-primary-600' : 'text-gray-400'}`} />
+              <ChevronDown className={`w-3 h-3 -mt-1 ${isActive && sortConfig.direction === 'desc' ? 'text-primary-600' : 'text-gray-400'}`} />
+            </div>
+          </div>
+        </th>
+      );
+    };
+
     switch (type) {
       case 'firearms':
         return (
@@ -199,9 +195,21 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.cartridge}</td>
             <td className={baseClasses}>{item.sku}</td>
             <td className={baseClasses}>{item.quantity}</td>
-            <td className={baseClasses}>{item.lotNumber}</td>
+            <td className={baseClasses}>{item.lotNumber || '-'}</td>
             <td className={baseClasses}>{item.notes || '-'}</td>
-            <td className={baseClasses}>{renderActions(item)}</td>
+            <td className={baseClasses}>
+              <div className="flex space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShowHistory(item)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <History className="w-4 h-4" />
+                </Button>
+                {renderActions(item)}
+              </div>
+            </td>
           </tr>
         );
       case 'bullets':
@@ -222,7 +230,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.manufacturer}</td>
             <td className={baseClasses}>{item.sku}</td>
             <td className={baseClasses}>{item.weight}</td>
-            <td className={baseClasses}>{item.lotNumber}</td>
+            <td className={baseClasses}>{item.lotNumber || '-'}</td>
             <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
@@ -234,7 +242,7 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
             <td className={baseClasses}>{item.sku}</td>
             <td className={baseClasses}>{item.type}</td>
             <td className={baseClasses}>{item.quantity}</td>
-            <td className={baseClasses}>{item.lotNumber}</td>
+            <td className={baseClasses}>{item.lotNumber || '-'}</td>
             <td className={baseClasses}>{item.notes || '-'}</td>
             <td className={baseClasses}>{renderActions(item)}</td>
           </tr>
@@ -276,6 +284,40 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
     </div>
   );
 
+  const filteredData = data.filter(item => {
+    const searchStr = searchTerm.toLowerCase();
+    switch (type) {
+      case 'firearms':
+        return item.manufacturer?.toLowerCase().includes(searchStr) ||
+               item.model?.toLowerCase().includes(searchStr) ||
+               item.caliber?.toLowerCase().includes(searchStr) ||
+               item.type?.toLowerCase().includes(searchStr);
+      case 'ammunition':
+        return item.cartridge?.toLowerCase().includes(searchStr) ||
+               item.sku?.toLowerCase().includes(searchStr) ||
+               item.lotNumber?.toLowerCase().includes(searchStr);
+      case 'bullets':
+        return item.manufacturer?.toLowerCase().includes(searchStr) ||
+               item.sku?.toLowerCase().includes(searchStr) ||
+               item.type?.toLowerCase().includes(searchStr);
+      case 'powder':
+        return item.manufacturer?.toLowerCase().includes(searchStr) ||
+               item.sku?.toLowerCase().includes(searchStr) ||
+               item.lotNumber?.toLowerCase().includes(searchStr);
+      case 'primers':
+        return item.manufacturer?.toLowerCase().includes(searchStr) ||
+               item.sku?.toLowerCase().includes(searchStr) ||
+               item.type?.toLowerCase().includes(searchStr);
+      case 'brass':
+        return item.cartridge?.toLowerCase().includes(searchStr) ||
+               item.manufacturer?.toLowerCase().includes(searchStr);
+      default:
+        return false;
+    }
+  });
+
+  const sortedData = getSortedData(filteredData);
+
   return (
     <>
       <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -297,6 +339,18 @@ export function InventoryTable({ type, data, searchTerm }: InventoryTableProps) 
           onClose={() => setEditItem(null)}
           type={type}
           initialData={editItem}
+        />
+      )}
+
+      {selectedAmmo && (
+        <AmmunitionHistoryModal
+          isOpen={showHistory}
+          onClose={() => {
+            setShowHistory(false);
+            setSelectedAmmo(null);
+          }}
+          history={ammoHistory}
+          cartridge={selectedAmmo.cartridge}
         />
       )}
     </>
