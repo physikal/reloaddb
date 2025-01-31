@@ -3,6 +3,7 @@ import { useAuthStore } from './store/auth';
 import { SignInPage } from './pages/SignIn';
 import { RegisterPage } from './pages/Register';
 import { RegisterSuccessPage } from './pages/RegisterSuccess';
+import { LandingPage } from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import { useAuthInit } from './lib/auth';
 
@@ -20,6 +21,10 @@ function App() {
 
   return (
     <Routes>
+      <Route 
+        path="/"
+        element={user ? <Dashboard /> : <LandingPage />}
+      />
       <Route 
         path="/signin"
         element={user ? <Navigate to="/" /> : <SignInPage />}
