@@ -6,13 +6,13 @@ interface RangeState {
   rangeDays: RangeDay[];
   loading: boolean;
   error: string | null;
-  fetchRangeDays: (userId: string) => Promise<void>;
-  addRangeDay: (rangeDay: Omit<RangeDay, 'id' | 'createdAt' | 'updatedAt' | 'stats'>) => Promise<void>;
-  updateRangeDay: (id: string, data: Partial<RangeDay>) => Promise<void>;
+  fetchRangeDays: (userId: string) => Promise<RangeDay[]>;
+  addRangeDay: (rangeDay: Omit<RangeDay, 'id' | 'createdAt' | 'updatedAt' | 'stats'>) => Promise<RangeDay>;
+  updateRangeDay: (id: string, data: Partial<RangeDay>) => Promise<RangeDay>;
   deleteRangeDay: (id: string) => Promise<void>;
 }
 
-export const useRangeStore = create<RangeState>((set) => ({
+export const useRangeStore = create<RangeState>((set, get) => ({
   rangeDays: [],
   loading: false,
   error: null,
@@ -20,7 +20,6 @@ export const useRangeStore = create<RangeState>((set) => ({
   fetchRangeDays: async (userId: string) => {
     set({ loading: true, error: null });
     try {
-      // Fetch from range_days table to get all data including shots
       const { data: rangeDays, error } = await supabase
         .from('range_days')
         .select('*')
@@ -29,7 +28,6 @@ export const useRangeStore = create<RangeState>((set) => ({
 
       if (error) throw error;
 
-      // Fetch stats for each range day
       const { data: stats, error: statsError } = await supabase
         .from('range_day_stats')
         .select('id, avg_muzzle_velocity, total_shots')
@@ -61,9 +59,11 @@ export const useRangeStore = create<RangeState>((set) => ({
       }) as RangeDay[];
 
       set({ rangeDays: processedRangeDays, loading: false });
+      return processedRangeDays;
     } catch (error: any) {
       console.error('Error fetching range days:', error);
       set({ error: error.message, loading: false });
+      throw error;
     }
   },
 
@@ -85,7 +85,6 @@ export const useRangeStore = create<RangeState>((set) => ({
 
       if (error) throw error;
 
-      // Fetch the stats for the new range day
       const { data: stats, error: statsError } = await supabase
         .from('range_day_stats')
         .select('*')
@@ -114,6 +113,8 @@ export const useRangeStore = create<RangeState>((set) => ({
       set(state => ({
         rangeDays: [newRangeDay, ...state.rangeDays]
       }));
+
+      return newRangeDay;
     } catch (error: any) {
       console.error('Error adding range day:', error);
       set({ error: error.message });
@@ -128,18 +129,19 @@ export const useRangeStore = create<RangeState>((set) => ({
         ...(data.date && { date: data.date.toISOString() }),
         ...(data.firearms && { firearms: data.firearms }),
         ...(data.ammunition && { ammunition: data.ammunition }),
-        ...(data.shots && { shots: data.shots }),
+        ...(data.shots !== undefined && { shots: data.shots }),
         ...(data.notes !== undefined && { notes: data.notes })
       };
 
-      const { error } = await supabase
+      const { data: updatedData, error } = await supabase
         .from('range_days')
         .update(updateData)
-        .eq('id', id);
+        .eq('id', id)
+        .select('*')
+        .single();
 
       if (error) throw error;
 
-      // Fetch updated stats
       const { data: stats, error: statsError } = await supabase
         .from('range_day_stats')
         .select('*')
@@ -148,19 +150,26 @@ export const useRangeStore = create<RangeState>((set) => ({
 
       if (statsError) throw statsError;
 
+      const updatedRangeDay = {
+        ...updatedData,
+        id: updatedData.id,
+        userId: updatedData.user_id,
+        date: new Date(updatedData.date),
+        stats: {
+          avgMuzzleVelocity: stats.avg_muzzle_velocity,
+          totalShots: stats.total_shots
+        },
+        createdAt: new Date(updatedData.created_at),
+        updatedAt: new Date(updatedData.updated_at)
+      } as RangeDay;
+
       set(state => ({
         rangeDays: state.rangeDays.map(day =>
-          day.id === id ? {
-            ...day,
-            ...data,
-            stats: {
-              avgMuzzleVelocity: stats.avg_muzzle_velocity,
-              totalShots: stats.total_shots
-            },
-            updatedAt: new Date()
-          } : day
+          day.id === id ? updatedRangeDay : day
         )
       }));
+
+      return updatedRangeDay;
     } catch (error: any) {
       console.error('Error updating range day:', error);
       set({ error: error.message });

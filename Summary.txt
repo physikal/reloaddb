@@ -1,7 +1,7 @@
 # ReloadDB Codebase Summary
 
 ## Overview
-ReloadDB is a comprehensive web application for managing reloading data, inventory, and range sessions. Built with React, TypeScript, and Supabase, it provides a robust platform for tracking ammunition reloading activities.
+ReloadDB is a comprehensive web application for managing reloading data, inventory, and range sessions. Built with React, TypeScript, and Supabase, it provides a robust platform for tracking ammunition reloading activities and range data.
 
 ## Tech Stack
 - Frontend: React + TypeScript
@@ -10,6 +10,9 @@ ReloadDB is a comprehensive web application for managing reloading data, invento
 - Database: Supabase (PostgreSQL)
 - Authentication: Supabase Auth
 - Icons: Lucide React
+- Excel Import/Export: XLSX
+- QR Code Generation: qrcode.react
+- 2FA Support: Base32 + SHA-1 HMAC
 
 ## Core Features
 1. Load Data Management
@@ -18,6 +21,8 @@ ReloadDB is a comprehensive web application for managing reloading data, invento
    - Cost per round calculation
    - Favorite loads
    - Customizable load card display
+   - Raw string value preservation for measurements
+   - Excel import/export
 
 2. Inventory Management
    - Track multiple inventory types:
@@ -30,18 +35,27 @@ ReloadDB is a comprehensive web application for managing reloading data, invento
    - Lot number tracking
    - Usage history
    - Excel import/export
+   - Automatic quantity updates
+   - Historical tracking
 
 3. Range Log
    - Track range sessions
    - Record shots and muzzle velocity
    - Ammunition usage tracking
-   - Statistical analysis (SD, ES)
+   - Statistical analysis (SD, ES, Avg)
+   - Shot string grouping
+   - Garmin data import
+   - Real-time updates
+   - Optimistic UI updates
 
 4. User Management
    - Email/password authentication
-   - Two-factor authentication
+   - Two-factor authentication (TOTP)
    - Profile settings
    - Admin panel
+   - Custom email templates
+   - Load form configuration
+   - Load card display preferences
 
 ## Database Schema
 
@@ -50,10 +64,13 @@ ReloadDB is a comprehensive web application for managing reloading data, invento
    - Authentication and user data
    - Role-based access control
    - Configuration preferences
+   - 2FA settings
+   - Last login tracking
 
 2. loads
    - Reloading data
    - Component measurements
+   - Raw measurement strings
    - Cost tracking
    - Display preferences
 
@@ -61,26 +78,37 @@ ReloadDB is a comprehensive web application for managing reloading data, invento
    - Quantity tracking
    - Lot numbers
    - Usage history
+   - Condition tracking
+   - Purchase information
 
 4. range_days
    - Session tracking
    - Shot data
    - Ammunition usage
+   - Firearm usage
+   - Statistical tracking
 
 ### Views
 - range_day_stats: Statistical analysis of range sessions
+  - Average muzzle velocity
+  - Total shots
+  - Ammunition usage
 
 ### Functions
 - calculate_avg_muzzle_velocity: Calculates average MV from shots
 - update_ammunition_quantity: Manages ammunition inventory
 - get_ammunition_history: Retrieves usage history
+- handle_new_user: Manages user creation
+- update_email_template: Manages email templates
 
 ## Security
 - Row Level Security (RLS) enabled on all tables
 - Per-user data isolation
 - Role-based access control
 - Secure password handling
-- Optional 2FA
+- TOTP-based 2FA
+- Security definer functions
+- Proper error handling
 
 ## State Management
 Uses Zustand stores for:
@@ -98,23 +126,28 @@ Uses Zustand stores for:
 - RegisterForm
 - PasswordResetModal
 - AuthGuard
+- 2FA Setup
 
 ### Load Management
 - LoadCard
 - LoadFormModal
 - LoadDetailsModal
 - CprCalculator
+- LoadCardConfig
 
 ### Inventory
 - InventoryTable
 - InventoryFormModal
 - AmmunitionHistoryModal
+- Excel Import/Export
 
 ### Range Log
 - RangeDayCard
-- RangeDayFormModal
+- RangeDayModal
 - ShotLog
 - ShotForm
+- ShotStringForm
+- GarminImport
 
 ## File Structure
 ```
@@ -128,7 +161,8 @@ src/
 ├── lib/
 │   ├── auth.ts     # Authentication utilities
 │   ├── supabase.ts # Database client
-│   └── 2fa.ts      # 2FA implementation
+│   ├── 2fa.ts      # 2FA implementation
+│   └── garmin.ts   # Garmin data parsing
 ├── pages/          # Route components
 ├── store/          # Zustand stores
 ├── types/          # TypeScript definitions
@@ -141,30 +175,48 @@ src/
    - All data changes must go through Supabase
    - Use RLS policies for security
    - Maintain data integrity with triggers
+   - Preserve raw string values for measurements
+   - Implement optimistic updates with rollback
 
 2. UI/UX
    - Consistent styling with Tailwind
    - Responsive design
    - Loading states for async operations
    - Error handling and user feedback
+   - Optimistic updates for better UX
 
 3. Type Safety
    - Strict TypeScript usage
    - Comprehensive type definitions
    - Type checking for all data operations
+   - Proper error typing
 
 4. Performance
    - Efficient state management
    - Optimized database queries
    - Proper indexing
+   - Batch operations where possible
+   - Optimistic UI updates
 
 5. Security
    - Authentication required for all operations
    - Data isolation between users
    - Input validation
    - Secure password handling
+   - 2FA support
+   - RLS policies
+   - Security definer functions
+
+6. Error Handling
+   - Comprehensive error catching
+   - User-friendly error messages
+   - State rollback on failure
+   - Proper error logging
+   - Recovery mechanisms
 
 ## Deployment
 - Static site hosting
 - Environment variables for configuration
 - Database migrations for schema changes
+- Email template management
+- Secure authentication setup
